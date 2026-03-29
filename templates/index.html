@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>搭梯子 — 帮小学生家长把题讲明白</title>
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --blue-600: #2563eb;
+      --blue-700: #1d4ed8;
+      --blue-50:  #eff6ff;
+      --blue-100: #dbeafe;
+      --amber-400: #fbbf24;
+      --gray-50:  #f9fafb;
+      --gray-100: #f3f4f6;
+      --gray-200: #e5e7eb;
+      --gray-400: #9ca3af;
+      --gray-500: #6b7280;
+      --gray-700: #374151;
+      --gray-900: #111827;
+      --green-500: #22c55e;
+      --red-500: #ef4444;
+      --radius: 14px;
+      --shadow: 0 1px 3px rgba(0,0,0,.08), 0 4px 12px rgba(0,0,0,.06);
+      --shadow-lg: 0 8px 24px rgba(0,0,0,.10);
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC",
+                   "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+      background: var(--gray-50);
+      color: var(--gray-900);
+      line-height: 1.6;
+      min-height: 100vh;
+    }
+
+    /* ── Header ── */
+    .site-header {
+      background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 60%, #3b82f6 100%);
+      padding: 40px 20px 36px;
+      text-align: center;
+      color: #fff;
+    }
+    .header-icon { font-size: 2.4rem; margin-bottom: 8px; }
+    .site-header h1 {
+      font-size: 2rem; font-weight: 800; letter-spacing: .04em; margin-bottom: 8px;
+    }
+    .site-header .tagline {
+      font-size: 1rem; opacity: .88; margin-bottom: 4px;
+    }
+    .site-header .sub-tagline {
+      font-size: .82rem; opacity: .70;
+    }
+
+    /* ── Layout ── */
+    .container { max-width: 720px; margin: 0 auto; padding: 28px 16px 60px; }
+
+    /* ── Card ── */
+    .card {
+      background: #fff;
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 28px 28px;
+      margin-bottom: 20px;
+    }
+    @media (max-width: 500px) {
+      .card { padding: 20px 16px; }
+    }
+
+    /* ── Form ── */
+    .card-intro { margin-bottom: 24px; }
+    .intro-main {
+      font-size: 1rem; font-weight: 600; color: var(--gray-900); margin-bottom: 6px;
+    }
+    .intro-sub {
+      font-size: .875rem; color: var(--gray-500); line-height: 1.5;
+    }
+
+    .form-group { margin-bottom: 20px; }
+    .form-label {
+      display: block; font-size: .875rem; font-weight: 600;
+      color: var(--gray-700); margin-bottom: 8px;
+    }
+    .required { color: var(--blue-600); }
+
+    /* Grade selector */
+    .grade-grid {
+      display: grid; grid-template-columns: repeat(6, 1fr); gap: 8px;
+    }
+    @media (max-width: 500px) {
+      .grade-grid { grid-template-columns: repeat(3, 1fr); }
+    }
+    .grade-btn {
+      padding: 8px 4px; border: 1.5px solid var(--gray-200);
+      border-radius: 8px; background: #fff; font-size: .875rem;
+      color: var(--gray-700); cursor: pointer; transition: all .15s;
+      font-weight: 500; text-align: center;
+    }
+    .grade-btn:hover { border-color: var(--blue-600); color: var(--blue-600); }
+    .grade-btn.active {
+      border-color: var(--blue-600); background: var(--blue-50);
+      color: var(--blue-600); font-weight: 700;
+    }
+
+    textarea, input[type="text"] {
+      width: 100%; border: 1.5px solid var(--gray-200);
+      border-radius: 10px; padding: 12px 14px;
+      font-size: .9375rem; font-family: inherit; color: var(--gray-900);
+      resize: vertical; transition: border-color .15s; outline: none;
+      background: #fff;
+    }
+    textarea:focus, input[type="text"]:focus {
+      border-color: var(--blue-600);
+      box-shadow: 0 0 0 3px rgba(37,99,235,.10);
+    }
+    textarea::placeholder, input::placeholder { color: var(--gray-400); }
+
+    /* Optional toggle */
+    .optional-toggle {
+      background: none; border: none; cursor: pointer;
+      font-size: .875rem; color: var(--blue-600); font-weight: 600;
+      padding: 6px 0; display: flex; align-items: center; gap: 6px;
+      margin-bottom: 4px;
+    }
+    .optional-toggle:hover { color: var(--blue-700); }
+    .optional-fields { display: none; margin-top: 16px; }
+    .optional-fields.open { display: block; }
+    .optional-note {
+      font-size: .8rem; color: var(--gray-400); margin-top: 4px;
+    }
+
+    /* Submit button */
+    .btn-submit {
+      width: 100%; padding: 15px; margin-top: 8px;
+      background: linear-gradient(135deg, var(--blue-600), var(--blue-700));
+      color: #fff; border: none; border-radius: 10px;
+      font-size: 1rem; font-weight: 700; cursor: pointer;
+      transition: opacity .15s, transform .1s;
+      letter-spacing: .02em;
+    }
+    .btn-submit:hover { opacity: .92; transform: translateY(-1px); }
+    .btn-submit:active { transform: translateY(0); }
+    .btn-submit:disabled { opacity: .5; cursor: not-allowed; transform: none; }
+
+    /* ── Loading ── */
+    #loading-card { display: none; text-align: center; padding: 48px 28px; }
+    .loading-icon-wrap { font-size: 2.8rem; margin-bottom: 16px; animation: bounce 1.2s infinite; }
+    @keyframes bounce {
+      0%,100% { transform: translateY(0); }
+      50% { transform: translateY(-8px); }
+    }
+    #loading-card h3 { font-size: 1.05rem; color: var(--gray-700); margin-bottom: 8px; }
+    #loading-card p  { font-size: .875rem; color: var(--gray-400); margin-bottom: 24px; }
+    .progress-bar {
+      height: 4px; background: var(--gray-100); border-radius: 9999px; overflow: hidden;
+    }
+    .progress-fill {
+      height: 100%; width: 0%; background: linear-gradient(90deg, var(--blue-600), var(--amber-400));
+      border-radius: 9999px; animation: progress 35s ease-out forwards;
+    }
+    @keyframes progress { 0%{width:0%} 80%{width:85%} 100%{width:90%} }
+
+    /* ── Result ── */
+    #result-card { display: none; }
+    .result-header {
+      border-bottom: 1px solid var(--gray-100); padding-bottom: 16px; margin-bottom: 24px;
+    }
+    .result-header h2 {
+      font-size: 1.2rem; font-weight: 800; color: var(--gray-900); margin-bottom: 6px;
+    }
+    .result-header p { font-size: .875rem; color: var(--gray-500); }
+
+    /* Markdown report styles */
+    .report-content { font-size: .9375rem; line-height: 1.75; color: var(--gray-700); }
+
+    .report-content h2 {
+      font-size: 1rem; font-weight: 700; color: var(--blue-700);
+      background: var(--blue-50); border-left: 4px solid var(--blue-600);
+      padding: 10px 14px; border-radius: 0 8px 8px 0;
+      margin: 28px 0 14px;
+    }
+    .report-content h2:first-child { margin-top: 0; }
+    .report-content h3 {
+      font-size: .9375rem; font-weight: 700; color: var(--gray-800);
+      margin: 18px 0 8px; padding-left: 12px;
+      border-left: 3px solid var(--amber-400);
+    }
+    .report-content p { margin-bottom: 10px; }
+    .report-content ul, .report-content ol {
+      padding-left: 20px; margin-bottom: 12px;
+    }
+    .report-content li { margin-bottom: 5px; }
+    .report-content strong { color: var(--gray-900); }
+    .report-content blockquote {
+      border-left: 3px solid var(--gray-200); padding-left: 14px;
+      color: var(--gray-500); margin: 12px 0;
+    }
+    .report-content code {
+      background: var(--gray-100); padding: 2px 6px; border-radius: 4px;
+      font-family: monospace; font-size: .875em;
+    }
+
+    /* Result actions */
+    .result-actions {
+      display: flex; gap: 12px; margin-top: 32px; padding-top: 20px;
+      border-top: 1px solid var(--gray-100);
+    }
+    .btn-primary {
+      flex: 1; padding: 12px; background: linear-gradient(135deg, var(--blue-600), var(--blue-700));
+      color: #fff; border: none; border-radius: 10px; font-size: .9375rem;
+      font-weight: 700; cursor: pointer; transition: opacity .15s;
+    }
+    .btn-primary:hover { opacity: .9; }
+    .btn-secondary {
+      flex: 1; padding: 12px; background: #fff; color: var(--blue-600);
+      border: 1.5px solid var(--blue-600); border-radius: 10px; font-size: .9375rem;
+      font-weight: 700; cursor: pointer; transition: background .15s;
+    }
+    .btn-secondary:hover { background: var(--blue-50); }
+
+    /* Copy feedback */
+    .copy-toast {
+      position: fixed; bottom: 28px; left: 50%; transform: translateX(-50%);
+      background: var(--gray-900); color: #fff; padding: 10px 20px;
+      border-radius: 99px; font-size: .875rem; pointer-events: none;
+      opacity: 0; transition: opacity .2s; white-space: nowrap; z-index: 9999;
+    }
+    .copy-toast.show { opacity: 1; }
+
+    /* Error */
+    .error-msg {
+      background: #fef2f2; border: 1px solid #fecaca; color: var(--red-500);
+      padding: 14px 16px; border-radius: 10px; font-size: .875rem; margin-top: 12px;
+    }
+  </style>
+</head>
+<body>
+
+<header class="site-header">
+  <div class="header-icon">🪜</div>
+  <h1>搭梯子</h1>
+  <p class="tagline">帮小学生家长把题讲明白</p>
+  <p class="sub-tagline">上传一道错题，生成一份家长讲题备课报告</p>
+</header>
+
+<div class="container">
+
+  <!-- Input card -->
+  <div class="card" id="input-card">
+    <div class="card-intro">
+      <p class="intro-main">不只是答案，而是帮你知道怎么讲</p>
+      <p class="intro-sub">这不是给孩子看的解析，而是给家长备课用的报告：先讲什么、孩子哪里会卡、家长哪里容易翻车。</p>
+    </div>
+
+    <form id="question-form" novalidate>
+
+      <!-- Grade -->
+      <div class="form-group">
+        <label class="form-label">孩子年级 <span class="required">*</span></label>
+        <div class="grade-grid">
+          <button type="button" class="grade-btn" data-grade="一年级">一年级</button>
+          <button type="button" class="grade-btn" data-grade="二年级">二年级</button>
+          <button type="button" class="grade-btn" data-grade="三年级">三年级</button>
+          <button type="button" class="grade-btn" data-grade="四年级">四年级</button>
+          <button type="button" class="grade-btn" data-grade="五年级">五年级</button>
+          <button type="button" class="grade-btn" data-grade="六年级">六年级</button>
+        </div>
+      </div>
+
+      <!-- Question -->
+      <div class="form-group">
+        <label class="form-label" for="question">错题题目 <span class="required">*</span></label>
+        <textarea id="question" rows="4"
+          placeholder="把题目完整输入进来，包括题目中的数字、条件和问题…&#10;&#10;例：甲单独做一项工程6天完成，乙单独做8天完成，两人合作几天完成？"></textarea>
+      </div>
+
+      <!-- Optional fields -->
+      <button type="button" class="optional-toggle" id="toggle-optional">
+        <span id="toggle-icon">＋</span> 添加补充信息（选填，有助于报告更准确）
+      </button>
+      <div class="optional-fields" id="optional-fields">
+
+        <div class="form-group">
+          <label class="form-label" for="student-answer">孩子原答案</label>
+          <input type="text" id="student-answer" placeholder="孩子写的答案是什么？">
+          <p class="optional-note">有助于判断孩子的误区在哪</p>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="correct-answer">正确答案（如果你已知道）</label>
+          <input type="text" id="correct-answer" placeholder="正确答案是什么？">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="parent-note">家长补充说明</label>
+          <textarea id="parent-note" rows="2"
+            placeholder="例：孩子总是搞不懂为什么要先求每天完成的份数 / 我自己也不确定怎么用孩子能懂的方式讲"></textarea>
+        </div>
+
+      </div>
+
+      <div id="form-error" class="error-msg" style="display:none"></div>
+
+      <button type="submit" class="btn-submit" id="submit-btn">
+        生成讲题备课报告
+      </button>
+
+    </form>
+  </div>
+
+  <!-- Loading card -->
+  <div class="card" id="loading-card">
+    <div class="loading-icon-wrap">🪜</div>
+    <h3>正在为你准备讲题备课报告…</h3>
+    <p>通常需要 20–40 秒，请稍候</p>
+    <div class="progress-bar"><div class="progress-fill"></div></div>
+  </div>
+
+  <!-- Result card -->
+  <div class="card" id="result-card">
+    <div class="result-header">
+      <h2>这道题，建议你这样讲</h2>
+      <p>不是只给答案，而是帮你更快看懂题目，并用孩子能听懂的方式讲出来。</p>
+    </div>
+    <div class="report-content" id="report-content"></div>
+    <div class="result-actions">
+      <button class="btn-secondary" onclick="resetForm()">再分析一道题</button>
+      <button class="btn-primary" onclick="copyReport()">复制这份报告</button>
+    </div>
+  </div>
+
+</div>
+
+<div class="copy-toast" id="copy-toast">已复制到剪贴板 ✓</div>
+
+<script>
+  // ── Grade selector ──
+  let selectedGrade = '';
+  document.querySelectorAll('.grade-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.grade-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      selectedGrade = btn.dataset.grade;
+    });
+  });
+
+  // ── Optional toggle ──
+  document.getElementById('toggle-optional').addEventListener('click', () => {
+    const fields = document.getElementById('optional-fields');
+    const icon   = document.getElementById('toggle-icon');
+    const open   = fields.classList.toggle('open');
+    icon.textContent = open ? '－' : '＋';
+  });
+
+  // ── Form submit ──
+  document.getElementById('question-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    const question = document.getElementById('question').value.trim();
+    const errEl    = document.getElementById('form-error');
+
+    if (!selectedGrade) {
+      errEl.textContent = '请先选择孩子的年级';
+      errEl.style.display = 'block';
+      return;
+    }
+    if (!question) {
+      errEl.textContent = '请输入题目内容';
+      errEl.style.display = 'block';
+      return;
+    }
+    errEl.style.display = 'none';
+
+    const payload = {
+      grade:          selectedGrade,
+      question:       question,
+      student_answer: document.getElementById('student-answer').value.trim(),
+      correct_answer: document.getElementById('correct-answer').value.trim(),
+      parent_note:    document.getElementById('parent-note').value.trim(),
+    };
+
+    showLoading();
+    await streamReport(payload);
+  });
+
+  function showLoading() {
+    document.getElementById('input-card').style.display   = 'none';
+    document.getElementById('result-card').style.display  = 'none';
+    document.getElementById('loading-card').style.display = 'block';
+    // reset progress bar animation
+    const fill = document.querySelector('.progress-fill');
+    fill.style.animation = 'none';
+    fill.offsetHeight; // reflow
+    fill.style.animation = '';
+  }
+
+  function showResult() {
+    document.getElementById('loading-card').style.display = 'none';
+    document.getElementById('result-card').style.display  = 'block';
+  }
+
+  async function streamReport(payload) {
+    let fullText = '';
+
+    try {
+      const response = await fetch('/api/generate', {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify(payload),
+      });
+
+      if (!response.ok) {
+        throw new Error(`服务器错误 (${response.status})，请稍后重试`);
+      }
+
+      showResult();
+
+      const reader  = response.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer    = '';
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split('\n');
+        buffer = lines.pop(); // keep incomplete line
+
+        for (const line of lines) {
+          if (!line.startsWith('data: ')) continue;
+          const data = line.slice(6).trim();
+          if (data === '[DONE]') { renderReport(fullText); return; }
+          if (!data) continue;
+          try {
+            const parsed = JSON.parse(data);
+            if (parsed.error) throw new Error(parsed.error);
+            if (parsed.text) {
+              fullText += parsed.text;
+              renderReport(fullText);
+            }
+          } catch (err) {
+            if (err.message && !err.message.includes('JSON')) throw err;
+          }
+        }
+      }
+      renderReport(fullText);
+
+    } catch (err) {
+      document.getElementById('loading-card').style.display = 'none';
+      document.getElementById('input-card').style.display   = 'block';
+      const errEl = document.getElementById('form-error');
+      errEl.textContent = '生成失败：' + (err.message || '请稍后重试');
+      errEl.style.display = 'block';
+      document.getElementById('submit-btn').disabled = false;
+    }
+  }
+
+  function renderReport(text) {
+    document.getElementById('report-content').innerHTML = marked.parse(text);
+  }
+
+  // ── Reset ──
+  function resetForm() {
+    document.getElementById('result-card').style.display = 'none';
+    document.getElementById('input-card').style.display  = 'block';
+    document.getElementById('report-content').innerHTML  = '';
+    document.getElementById('form-error').style.display  = 'none';
+    document.getElementById('submit-btn').disabled       = false;
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  // ── Copy report ──
+  function copyReport() {
+    const content = document.getElementById('report-content').innerText;
+    navigator.clipboard.writeText(content).then(() => {
+      const toast = document.getElementById('copy-toast');
+      toast.classList.add('show');
+      setTimeout(() => toast.classList.remove('show'), 2200);
+    });
+  }
+</script>
+
+</body>
+</html>
