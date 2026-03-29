@@ -167,13 +167,11 @@ async def jinkuang():
 
 @app.post("/api/generate")
 async def generate(req: GenerateRequest):
-    # 第一步：用 reasoner 预解题，确保答案正确
-    verified_answer = await presolve_math(req.question, req.grade)
-    user_prompt = build_user_prompt(req, verified_answer)
+    user_prompt = build_user_prompt(req)
 
     async def stream():
         try:
-            async with httpx.AsyncClient(timeout=120.0) as client:
+            async with httpx.AsyncClient(timeout=180.0) as client:
                 async with client.stream(
                     "POST",
                     "https://api.deepseek.com/chat/completions",
@@ -182,13 +180,12 @@ async def generate(req: GenerateRequest):
                         "Content-Type": "application/json",
                     },
                     json={
-                        "model": "deepseek-chat",
+                        "model": "deepseek-reasoner",
                         "messages": [
                             {"role": "system", "content": SYSTEM_PROMPT},
                             {"role": "user", "content": user_prompt},
                         ],
                         "stream": True,
-                        "temperature": 0.7,
                         "max_tokens": 3000,
                     },
                 ) as response:
@@ -204,7 +201,8 @@ async def generate(req: GenerateRequest):
                         try:
                             chunk = json.loads(data_str)
                             delta = chunk["choices"][0]["delta"]
-                            content = delta.get("content", "")
+                            # reasoner 同时流 reasoning_content 和 content，只取 content
+                            content = delta.get("content") or ""
                             if content:
                                 yield f"data: {json.dumps({'text': content}, ensure_ascii=False)}\n\n"
                         except Exception:
