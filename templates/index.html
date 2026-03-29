@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>搭梯子 — 帮小学生家长把题讲明白</title>
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -131,6 +132,27 @@
     .optional-note {
       font-size: .8rem; color: var(--gray-400); margin-top: 4px;
     }
+
+    /* OCR */
+    .ocr-btn {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 7px 14px; margin-top: 8px;
+      background: var(--gray-100); border: 1.5px solid var(--gray-200);
+      border-radius: 8px; font-size: .8125rem; color: var(--gray-700);
+      cursor: pointer; transition: all .15s; font-weight: 500;
+    }
+    .ocr-btn:hover { background: var(--blue-50); border-color: var(--blue-600); color: var(--blue-600); }
+    .ocr-btn:disabled { opacity: .5; cursor: not-allowed; }
+    .ocr-status {
+      font-size: .8rem; color: var(--blue-600); margin-top: 6px;
+      min-height: 18px; display: flex; align-items: center; gap: 6px;
+    }
+    .ocr-spinner {
+      width: 12px; height: 12px; border: 2px solid var(--blue-100);
+      border-top-color: var(--blue-600); border-radius: 50%;
+      animation: spin .7s linear infinite; flex-shrink: 0;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
 
     /* Submit button */
     .btn-submit {
@@ -288,6 +310,11 @@
         <label class="form-label" for="question">错题题目 <span class="required">*</span></label>
         <textarea id="question" rows="4"
           placeholder="把题目完整输入进来，包括题目中的数字、条件和问题…&#10;&#10;例：甲单独做一项工程6天完成，乙单独做8天完成，两人合作几天完成？"></textarea>
+        <input type="file" id="ocr-input" accept="image/*" capture="environment" style="display:none">
+        <button type="button" class="ocr-btn" id="ocr-btn" onclick="document.getElementById('ocr-input').click()">
+          📷 拍照识题
+        </button>
+        <div class="ocr-status" id="ocr-status"></div>
       </div>
 
       <!-- Optional fields -->
@@ -500,6 +527,45 @@
       setTimeout(() => toast.classList.remove('show'), 2200);
     });
   }
+
+  // ── OCR 拍照识题 ──
+  document.getElementById('ocr-input').addEventListener('change', async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const btn    = document.getElementById('ocr-btn');
+    const status = document.getElementById('ocr-status');
+    const qBox   = document.getElementById('question');
+
+    btn.disabled = true;
+    status.innerHTML = '<div class="ocr-spinner"></div> 正在识别，首次使用需下载语言包（约10秒）…';
+
+    try {
+      const { data: { text } } = await Tesseract.recognize(file, 'chi_sim+eng', {
+        logger: m => {
+          if (m.status === 'recognizing text') {
+            const pct = Math.round(m.progress * 100);
+            status.innerHTML = `<div class="ocr-spinner"></div> 识别中 ${pct}%…`;
+          } else if (m.status === 'loading language traineddata') {
+            status.innerHTML = '<div class="ocr-spinner"></div> 正在加载中文语言包…';
+          }
+        }
+      });
+
+      const cleaned = text.replace(/\s+/g, ' ').trim();
+      if (cleaned) {
+        qBox.value = cleaned;
+        status.innerHTML = '✅ 识别完成，请检查并修正文字后再生成报告';
+      } else {
+        status.innerHTML = '⚠️ 未识别到文字，请重拍或手动输入';
+      }
+    } catch (err) {
+      status.innerHTML = '⚠️ 识别失败，请手动输入题目';
+    } finally {
+      btn.disabled = false;
+      e.target.value = ''; // 允许重复选同一文件
+    }
+  });
 
   // ── 跳转挖金矿 ──
   function goToJinkuang() {
