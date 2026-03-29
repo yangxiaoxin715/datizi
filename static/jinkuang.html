@@ -1,0 +1,2766 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>挖金矿</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;600;700&family=Noto+Sans+SC:wght@400;500;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#faf8f4; --bg2:#f3f0ea; --card:#ffffff;
+  --coral:#ff6b4a; --coral-l:#ff8c6f; --coral-d:#e5502f;
+  --coral-bg:#fff2ef; --coral-border:#ffc4b8;
+  --sky:#3b9eff; --sky-bg:#eef6ff; --sky-border:#b3d9ff;
+  --mint:#2ec99a; --mint-bg:#edfbf5; --mint-border:#9be8ce;
+  --sun:#ffb930; --sun-bg:#fff8e6; --sun-border:#ffd980;
+  --text:#2d2417; --text2:#7a6f60; --text3:#b8ad9e;
+  --border:#e8e2d8; --border2:#d4cdc0;
+  --topbar:56px; --nav:68px; --r:18px; --rs:12px; --r-sm:8px;
+  --shadow-sm:0 2px 8px rgba(0,0,0,0.06);
+  --shadow:0 4px 20px rgba(0,0,0,0.08);
+  --shadow-lg:0 8px 32px rgba(0,0,0,0.10);
+  --kb-offset:0px;
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+body{background:var(--bg);color:var(--text);font-family:'Noto Sans SC',sans-serif;min-height:100vh;overflow-x:hidden;-webkit-font-smoothing:antialiased;}
+
+/* ── OVERLAYS ── */
+.overlay{position:fixed;inset:0;z-index:999;background:rgba(250,248,244,0.97);backdrop-filter:blur(8px);display:flex;align-items:center;justify-content:center;padding:20px;}
+.overlay.hidden{display:none;}
+.ov-box{background:var(--card);border:2px solid var(--border);border-radius:24px;max-width:440px;width:100%;box-shadow:var(--shadow-lg);overflow:hidden;}
+
+/* access code */
+.code-panel{padding:40px 32px 32px;text-align:center;}
+.code-logo{font-size:52px;margin-bottom:14px;display:block;}
+.code-title{font-family:'Noto Serif SC',serif;font-size:24px;font-weight:700;color:var(--text);margin-bottom:8px;}
+.code-desc{font-size:14px;color:var(--text2);line-height:1.75;margin-bottom:28px;}
+.code-input{
+  width:100%;padding:18px;border-radius:var(--r);
+  border:2px solid var(--border);background:var(--bg);
+  color:var(--text);font-size:28px;font-family:'DM Mono',monospace;
+  text-align:center;letter-spacing:10px;outline:none;
+  transition:border-color .2s;margin-bottom:10px;
+}
+.code-input:focus{border-color:var(--coral);}
+.code-err{font-size:13px;color:var(--coral-d);min-height:20px;margin-bottom:14px;}
+.btn-main{width:100%;padding:15px;border-radius:var(--r);background:var(--coral);color:#fff;font-size:16px;font-weight:700;border:none;cursor:pointer;font-family:'Noto Sans SC',sans-serif;box-shadow:0 4px 16px rgba(255,107,74,0.3);transition:all .2s;}
+.btn-main:hover{background:var(--coral-d);transform:translateY(-1px);}
+.btn-main:disabled{opacity:.5;cursor:not-allowed;transform:none;}
+.code-hint{font-size:12px;color:var(--text3);margin-top:16px;line-height:1.6;}
+
+/* grade setup */
+.setup-panel{padding:32px;}
+.setup-step{font-size:11px;color:var(--text3);font-family:'DM Mono',monospace;letter-spacing:.08em;margin-bottom:16px;}
+.setup-title{font-family:'Noto Serif SC',serif;font-size:22px;font-weight:700;margin-bottom:8px;}
+.setup-desc{font-size:14px;color:var(--text2);line-height:1.75;margin-bottom:24px;}
+.grade-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:20px;}
+.g-btn{padding:14px 8px;border-radius:var(--rs);background:var(--bg);border:2px solid var(--border);color:var(--text2);font-size:14px;font-weight:500;cursor:pointer;transition:all .15s;text-align:center;}
+.g-btn:hover{border-color:var(--coral-border);background:var(--coral-bg);}
+.g-btn.sel{background:var(--coral);border-color:var(--coral);color:#fff;}
+.exam-section{margin-bottom:20px;}
+.exam-title{font-size:13px;font-weight:700;color:var(--text);margin-bottom:10px;}
+.exam-row{display:flex;align-items:center;justify-content:space-between;padding:12px 14px;background:var(--bg);border:1.5px solid var(--border);border-radius:var(--rs);margin-bottom:8px;}
+.exam-lbl{font-size:14px;color:var(--text);}
+.exam-sub{font-size:11px;color:var(--text3);margin-top:2px;}
+.exam-date{padding:6px 10px;border-radius:var(--r-sm);background:var(--card);border:1px solid var(--border2);color:var(--text);font-size:12px;font-family:'DM Mono',monospace;outline:none;cursor:pointer;}
+.exam-date:focus{border-color:var(--coral);}
+.exam-date::-webkit-calendar-picker-indicator{opacity:.5;}
+.exam-skip{font-size:11px;color:var(--text3);text-align:center;cursor:pointer;text-decoration:underline;margin-top:4px;}
+.btn-back{padding:15px 20px;border-radius:var(--r);background:transparent;border:2px solid var(--border2);color:var(--text2);font-size:14px;cursor:pointer;font-family:'Noto Sans SC',sans-serif;transition:all .2s;}
+.btn-back:hover{border-color:var(--border2);color:var(--text);}
+.setup-nav{display:flex;gap:10px;}
+.setup-nav .btn-main{flex:1;}
+
+/* ── TOP BAR ── */
+#topBar{
+  position:fixed;top:0;left:0;right:0;z-index:100;
+  background:rgba(250,248,244,0.96);backdrop-filter:blur(12px);
+  border-bottom:1px solid var(--border);
+  display:flex;align-items:center;padding:0 20px;height:var(--topbar);gap:10px;
+}
+.brand{font-family:'Noto Serif SC',serif;font-size:18px;font-weight:700;color:var(--text);display:flex;align-items:center;gap:8px;}
+.brand-icon{width:32px;height:32px;border-radius:10px;background:linear-gradient(135deg,var(--coral),var(--coral-d));display:flex;align-items:center;justify-content:center;font-size:17px;box-shadow:0 2px 8px rgba(255,107,74,0.3);}
+.top-spacer{flex:1;}
+/* due reminder dot */
+.due-chip{
+  width:14px;height:14px;border-radius:50%;
+  background:var(--coral);border:2px solid #fff;cursor:pointer;
+  box-shadow:0 0 0 2px rgba(255,107,74,0.22);
+  animation:softPulse 2.4s infinite;
+}
+.due-chip.hidden{display:none;}
+.due-chip span{display:none;}
+@keyframes softPulse{0%,100%{opacity:1}50%{opacity:.7}}
+
+/* ── BOTTOM NAV — 2 tabs only ── */
+#mainNav{
+  position:fixed;bottom:0;left:0;right:0;z-index:100;
+  background:rgba(250,248,244,0.97);backdrop-filter:blur(12px);
+  border-top:1px solid var(--border);
+  display:flex;padding-bottom:env(safe-area-inset-bottom);
+}
+.mtab{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:10px 0 11px;cursor:pointer;border:none;background:transparent;color:var(--text3);font-size:10px;font-family:'Noto Sans SC',sans-serif;transition:all .2s;gap:4px;position:relative;}
+.mtab:hover{color:var(--text2);}
+.mtab.active{color:var(--coral);}
+.mtab.active::after{content:'';position:absolute;top:0;left:25%;right:25%;height:3px;background:var(--coral);border-radius:0 0 3px 3px;}
+.mtab-icon{font-size:22px;line-height:1;}
+.mtab-lbl{font-size:10px;letter-spacing:.02em;}
+.mtab-badge{position:absolute;top:5px;right:calc(50% - 18px);min-width:17px;height:17px;padding:0 4px;border-radius:99px;background:var(--coral);color:#fff;font-size:10px;display:flex;align-items:center;justify-content:center;font-family:'DM Mono',monospace;font-weight:700;}
+.mtab-badge.hidden{display:none;}
+
+/* ── SCREENS ── */
+.screen{display:none;min-height:100vh;padding-top:var(--topbar);padding-bottom:var(--nav);animation:fadeUp .3s ease;}
+.screen.active{display:block;}
+@keyframes fadeUp{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:none;}}
+
+/* ── S1: REVIEW (main screen) ── */
+#s1{background:var(--bg);}
+.review-wrap{max-width:560px;margin:0 auto;padding:28px 20px 100px;}
+
+/* due reminder on review page */
+.review-due{background:linear-gradient(135deg,#fff5f3,#fff8ef);border:1.5px solid var(--coral-border);border-radius:var(--r);padding:16px 18px;margin-bottom:20px;}
+.review-due.hidden{display:none;}
+.review-due-hd{display:flex;align-items:center;gap:8px;margin-bottom:10px;}
+.review-due-title{font-size:14px;font-weight:700;color:var(--coral-d);flex:1;}
+.due-items{display:flex;flex-direction:column;gap:7px;}
+.due-item{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:var(--rs);background:#fff;border:1.5px solid var(--border);cursor:pointer;transition:all .2s;}
+.due-item:hover{border-color:var(--coral-border);background:var(--coral-bg);}
+.due-badge{padding:3px 9px;border-radius:99px;font-size:10px;font-weight:700;white-space:nowrap;}
+.due-badge.r2{background:var(--mint-bg);color:var(--mint);border:1px solid var(--mint-border);}
+.due-badge.r3{background:var(--coral-bg);color:var(--coral-d);border:1px solid var(--coral-border);}
+.due-q{font-size:13px;color:var(--text);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.due-go{padding:5px 13px;border-radius:99px;background:var(--coral);color:#fff;border:none;font-size:12px;cursor:pointer;font-weight:700;font-family:'Noto Sans SC',sans-serif;white-space:nowrap;transition:all .15s;}
+.due-go:hover{background:var(--coral-d);}
+
+/* input form */
+.form-ttl{font-family:'Noto Serif SC',serif;font-size:22px;font-weight:700;color:var(--text);margin-bottom:6px;}
+.form-sub{font-size:14px;color:var(--text2);line-height:1.7;margin-bottom:24px;}
+.form-blk{margin-bottom:20px;}
+.form-lbl{display:block;font-size:12px;color:var(--text2);font-weight:700;letter-spacing:.05em;text-transform:uppercase;margin-bottom:8px;}
+.ftextarea{width:100%;padding:14px 16px;border-radius:var(--r);background:var(--card);border:1.5px solid var(--border);color:var(--text);font-size:15px;line-height:1.8;font-family:'Noto Sans SC',sans-serif;resize:vertical;min-height:110px;outline:none;transition:border-color .2s;box-shadow:var(--shadow-sm);}
+.ftextarea:focus{border-color:var(--coral);}
+.ftextarea::placeholder{color:var(--text3);}
+.ftextarea:disabled{opacity:.5;background:var(--bg2);}
+.finput{width:100%;padding:12px 16px;border-radius:var(--rs);background:var(--card);border:1.5px solid var(--border);color:var(--text);font-size:15px;font-family:'Noto Sans SC',sans-serif;outline:none;transition:border-color .2s;box-shadow:var(--shadow-sm);}
+.finput:focus{border-color:var(--coral);}
+.finput::placeholder{color:var(--text3);}
+.form-hint{font-size:11px;color:var(--text3);margin-top:5px;line-height:1.5;}
+.form-err{font-size:13px;color:var(--coral-d);margin-top:10px;display:none;padding:10px 14px;background:var(--coral-bg);border-radius:var(--rs);border:1px solid var(--coral-border);}
+.start-btn{width:100%;padding:17px;border-radius:var(--r);background:linear-gradient(135deg,var(--coral),var(--coral-d));color:#fff;font-size:17px;font-weight:700;border:none;cursor:pointer;font-family:'Noto Sans SC',sans-serif;box-shadow:0 6px 20px rgba(255,107,74,0.32);transition:all .2s;display:flex;align-items:center;justify-content:center;gap:8px;}
+.start-btn:hover{transform:translateY(-1px);box-shadow:0 9px 28px rgba(255,107,74,0.38);}
+.start-btn:disabled{opacity:.5;cursor:not-allowed;transform:none;}
+
+/* ── S2: CHAT ── */
+#s2{padding-bottom:0;}
+#s2.active{display:flex;flex-direction:column;height:100vh;height:100dvh;margin-bottom:0;}
+.chat-strip{background:var(--card);border-bottom:1.5px solid var(--border);padding:10px 16px;display:flex;flex-direction:column;gap:10px;flex-shrink:0;box-shadow:var(--shadow-sm);}
+.chat-strip-top{display:flex;align-items:center;gap:8px;width:100%;}
+.chat-round-pill{padding:3px 10px;border-radius:99px;font-size:10px;font-weight:700;white-space:nowrap;}
+.chat-round-pill.r1{background:var(--sun-bg);color:#b87b00;border:1px solid var(--sun-border);}
+.chat-round-pill.r2{background:var(--mint-bg);color:var(--mint);border:1px solid var(--mint-border);}
+.chat-round-pill.r3{background:var(--coral-bg);color:var(--coral-d);border:1px solid var(--coral-border);}
+.chat-live{width:7px;height:7px;border-radius:50%;background:#2ec99a;animation:livePulse 2s infinite;flex-shrink:0;}
+@keyframes livePulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.5;transform:scale(1.3)}}
+.chat-q-preview{
+  width:100%;padding:10px 12px;border-radius:14px;
+  background:var(--bg);border:1.5px solid var(--border);
+  font-size:13px;color:var(--text);line-height:1.6;
+  white-space:normal;word-break:break-word;cursor:pointer;
+}
+.chat-prog{display:flex;align-items:center;gap:3px;}
+.cp-dot{width:7px;height:7px;border-radius:50%;background:var(--border2);}
+.cp-dot.done{background:var(--mint);}
+.cp-dot.cur{background:var(--coral);animation:dotPulse 2s infinite;}
+@keyframes dotPulse{0%,100%{box-shadow:0 0 0 0 rgba(255,107,74,.5)}50%{box-shadow:0 0 0 4px rgba(255,107,74,0)}}
+.chat-end-btn{padding:6px 13px;border-radius:99px;background:transparent;border:1.5px solid var(--border2);color:var(--text2);font-size:11px;cursor:pointer;font-family:'Noto Sans SC',sans-serif;font-weight:500;transition:all .15s;white-space:nowrap;}
+.chat-end-btn:hover{border-color:var(--coral);color:var(--coral);}
+.chat-end-btn:disabled{opacity:.4;cursor:not-allowed;}
+.chat-messages{flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:14px;background:var(--bg);}
+.chat-messages::-webkit-scrollbar{width:4px;}
+.chat-messages::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px;}
+.msg{display:flex;gap:8px;}
+.msg.user{flex-direction:row-reverse;margin-left:auto;max-width:85%;}
+.msg.ai{max-width:90%;}
+.msg-av{width:34px;height:34px;border-radius:12px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:18px;background:var(--card);border:1.5px solid var(--border);box-shadow:var(--shadow-sm);}
+.msg.user .msg-av{background:var(--sky-bg);border-color:var(--sky-border);}
+.msg-bub{padding:11px 15px;border-radius:18px;font-size:15px;line-height:1.75;}
+.msg.ai .msg-bub{background:var(--card);border:1.5px solid var(--border);color:var(--text);border-top-left-radius:4px;box-shadow:var(--shadow-sm);}
+.msg.user .msg-bub{background:var(--coral);color:#fff;border-top-right-radius:4px;box-shadow:0 2px 10px rgba(255,107,74,0.25);}
+.msg-time{font-size:10px;color:var(--text3);margin-top:4px;font-family:'DM Mono',monospace;}
+.msg.user .msg-time{text-align:right;}
+.typing-dots{display:flex;gap:5px;padding:4px 0;}
+.typing-dots span{width:8px;height:8px;border-radius:50%;background:var(--border2);animation:tdb 1.4s infinite;}
+.typing-dots span:nth-child(2){animation-delay:.2s;}
+.typing-dots span:nth-child(3){animation-delay:.4s;}
+@keyframes tdb{0%,60%,100%{transform:translateY(0);background:var(--border2)}30%{transform:translateY(-6px);background:var(--coral-border)}}
+/* pass effect */
+.pass-effect{display:flex;align-items:center;justify-content:center;gap:8px;padding:10px 16px;margin:0 0 4px;background:linear-gradient(135deg,var(--mint-bg),var(--sun-bg));border:1.5px solid var(--mint-border);border-radius:14px;font-size:20px;animation:passIn .3s ease, passOut .4s ease 1.6s forwards;}
+@keyframes passIn{from{opacity:0;transform:scale(.85) translateY(8px);}to{opacity:1;transform:scale(1) translateY(0);}}
+@keyframes passOut{from{opacity:1;}to{opacity:0;transform:translateY(-6px);}}
+/* chat input */
+.chat-bar{padding:10px 14px calc(10px + env(safe-area-inset-bottom) + var(--kb-offset));border-top:1.5px solid var(--border);background:var(--card);flex-shrink:0;}
+.chat-bar-row{display:flex;gap:10px;align-items:flex-end;}
+.chat-peek-btn{
+  height:44px;padding:0 14px;border-radius:13px;flex-shrink:0;
+  background:var(--sun-bg);border:1.5px solid var(--sun-border);
+  color:#7a5c00;font-size:13px;font-weight:700;cursor:pointer;
+  font-family:'Noto Sans SC',sans-serif;transition:all .15s;
+}
+.chat-peek-btn:hover{background:var(--sun);color:#fff;}
+.chat-textarea{flex:1;padding:11px 15px;border-radius:14px;background:var(--bg);border:1.5px solid var(--border);color:var(--text);font-size:15px;line-height:1.6;font-family:'Noto Sans SC',sans-serif;resize:none;outline:none;transition:border-color .2s;max-height:110px;min-height:44px;}
+.chat-textarea:focus{border-color:var(--coral);}
+.chat-textarea::placeholder{color:var(--text3);}
+.chat-textarea:disabled{opacity:.5;background:var(--bg2);}
+.send-btn{width:44px;height:44px;border-radius:13px;flex-shrink:0;background:var(--coral);border:none;cursor:pointer;color:#fff;font-size:18px;display:flex;align-items:center;justify-content:center;box-shadow:0 3px 12px rgba(255,107,74,0.35);transition:all .15s;}
+.send-btn:hover{background:var(--coral-d);transform:scale(1.05);}
+.send-btn:disabled{opacity:.4;cursor:not-allowed;transform:none;}
+.voice-btn{
+  min-width:112px;height:52px;padding:0 16px;border-radius:16px;flex-shrink:0;
+  background:linear-gradient(135deg,var(--coral),var(--coral-d));border:none;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;gap:8px;font-size:16px;color:#fff;
+  font-weight:700;font-family:'Noto Sans SC',sans-serif;transition:all .15s;user-select:none;-webkit-user-select:none;
+  box-shadow:0 6px 18px rgba(255,107,74,0.32);
+}
+.voice-btn .mic-icon{font-size:19px;line-height:1;}
+.voice-btn .mic-label{font-size:14px;white-space:nowrap;}
+.voice-btn.recording{background:var(--coral);border-color:var(--coral);animation:recordPulse .8s infinite;}
+.voice-btn.ready{background:linear-gradient(135deg,var(--mint),#1fae83);}
+@keyframes recordPulse{0%{box-shadow:0 0 0 0 rgba(255,107,74,.5);}70%{box-shadow:0 0 0 10px rgba(255,107,74,0);}100%{box-shadow:0 0 0 0 rgba(255,107,74,0);}}
+.voice-status{text-align:center;padding:8px 12px;font-size:12px;color:var(--coral-d);background:var(--coral-bg);border-radius:var(--rs);margin-bottom:8px;display:none;border:1px solid var(--coral-border);}
+.voice-status.vis{display:block;}
+.chat-hint{font-size:12px;color:var(--text3);margin-top:8px;text-align:center;}
+.chat-err{background:var(--coral-bg);border:1.5px solid var(--coral-border);border-radius:var(--rs);padding:9px 13px;font-size:13px;color:var(--coral-d);margin-bottom:8px;}
+@media(max-width:560px){
+  .chat-bar-row{flex-wrap:wrap;}
+  .chat-peek-btn{order:2;}
+  .chat-textarea{order:3;flex-basis:100%;}
+  .voice-btn{order:1;flex:1;}
+  .send-btn{order:4;}
+}
+
+/* ── S3: ARCHIVE ── */
+#s3{background:var(--bg);}
+.arc-wrap{max-width:640px;margin:0 auto;padding:28px 20px 100px;}
+.arc-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:22px;}
+.arc-title{font-family:'Noto Serif SC',serif;font-size:22px;font-weight:700;}
+.arc-acts{display:flex;gap:6px;}
+.arc-btn{padding:7px 13px;border-radius:99px;font-size:12px;cursor:pointer;font-family:'Noto Sans SC',sans-serif;transition:all .15s;background:var(--card);border:1.5px solid var(--border);color:var(--text2);}
+.arc-btn:hover{border-color:var(--border2);color:var(--text);}
+.arc-btn.danger{border-color:var(--coral-border);color:var(--coral-d);}
+/* grade + exam settings section */
+.arc-settings{background:var(--card);border:1.5px solid var(--border);border-radius:var(--r);padding:14px 16px;margin-bottom:18px;box-shadow:var(--shadow-sm);}
+.arc-set-top{display:flex;align-items:center;justify-content:space-between;gap:12px;cursor:pointer;}
+.arc-set-title{font-size:11px;color:var(--text3);letter-spacing:.08em;text-transform:uppercase;font-family:'DM Mono',monospace;display:flex;align-items:center;gap:7px;min-width:0;flex:1;}
+.arc-set-title::after{content:'';flex:1;height:1px;background:var(--border);}
+.arc-set-summary{font-size:12px;color:var(--text2);line-height:1.5;margin-top:10px;}
+.arc-set-toggle{padding:6px 12px;border-radius:99px;background:var(--bg);border:1.5px solid var(--border);color:var(--text2);font-size:12px;font-weight:700;cursor:pointer;font-family:'Noto Sans SC',sans-serif;white-space:nowrap;}
+.arc-set-body{display:none;margin-top:12px;}
+.arc-settings.open .arc-set-body{display:block;}
+.arc-settings.open .arc-set-summary{display:none;}
+.arc-set-row{display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border);gap:12px;}
+.arc-set-row:last-child{border-bottom:none;padding-bottom:0;}
+.arc-set-lbl{font-size:14px;color:var(--text);font-weight:500;}
+.arc-set-sub{font-size:11px;color:var(--text3);margin-top:2px;}
+.arc-set-val{font-size:13px;color:var(--text2);font-family:'DM Mono',monospace;}
+.arc-set-inp{padding:6px 10px;border-radius:var(--r-sm);background:var(--bg);border:1.5px solid var(--border);color:var(--text);font-size:12px;font-family:'DM Mono',monospace;outline:none;cursor:pointer;transition:border-color .15s;}
+.arc-set-inp:focus{border-color:var(--coral);}
+.arc-set-inp::-webkit-calendar-picker-indicator{opacity:.5;}
+.grade-change-btn{padding:5px 13px;border-radius:99px;background:transparent;border:1.5px solid var(--border2);color:var(--text2);font-size:12px;cursor:pointer;font-family:'Noto Sans SC',sans-serif;transition:all .15s;}
+.grade-change-btn:hover{border-color:var(--coral);color:var(--coral);}
+.arc-save-btn{width:100%;padding:12px;border-radius:var(--r);background:var(--coral);color:#fff;font-size:14px;font-weight:700;border:none;cursor:pointer;font-family:'Noto Sans SC',sans-serif;margin-top:14px;box-shadow:0 4px 14px rgba(255,107,74,0.25);transition:all .2s;}
+.arc-save-btn:hover{background:var(--coral-d);}
+.arc-saved{font-size:12px;color:var(--mint);text-align:center;margin-top:8px;display:none;font-weight:600;}
+/* stats */
+.arc-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px;}
+.astat{background:var(--card);border:1.5px solid var(--border);border-radius:var(--r);padding:14px;box-shadow:var(--shadow-sm);}
+.astat-n{font-family:'DM Mono',monospace;font-size:22px;font-weight:700;color:var(--coral);margin-bottom:3px;}
+.astat-l{font-size:10px;color:var(--text3);}
+/* weak cloud */
+.weak-cloud-wrap{background:var(--card);border:1.5px solid var(--border);border-radius:var(--r);padding:16px;margin-bottom:14px;box-shadow:var(--shadow-sm);}
+.wc-ttl{font-size:10px;color:var(--text3);letter-spacing:.08em;text-transform:uppercase;font-family:'DM Mono',monospace;margin-bottom:10px;}
+.wcloud{display:flex;flex-wrap:wrap;gap:7px;}
+.wctag{display:flex;align-items:center;gap:5px;padding:5px 12px;border-radius:99px;font-size:12px;background:var(--coral-bg);border:1px solid var(--coral-border);color:var(--text2);}
+.wctag-n{font-family:'DM Mono',monospace;font-size:10px;background:var(--coral);color:#fff;padding:1px 6px;border-radius:99px;font-weight:700;}
+.archive-report{background:linear-gradient(135deg,#fff8e6,#fff5f3);border:1.5px solid var(--sun-border);border-radius:var(--r);padding:16px;margin-bottom:14px;box-shadow:var(--shadow-sm);}
+.archive-report.hidden{display:none;}
+.archive-report-launch{background:var(--card);border:1.5px dashed var(--sun-border);border-radius:var(--r);padding:16px;margin-bottom:14px;box-shadow:var(--shadow-sm);}
+.ar-title{font-family:'Noto Serif SC',serif;font-size:18px;font-weight:700;color:var(--text);margin-bottom:6px;}
+.ar-sub{font-size:13px;color:var(--text2);line-height:1.7;margin-bottom:14px;}
+.ar-grid{display:grid;grid-template-columns:1fr;gap:10px;}
+.ar-card{background:rgba(255,255,255,.75);border:1px solid var(--border);border-radius:14px;padding:12px 13px;}
+.ar-card-lbl{font-size:10px;color:var(--text3);letter-spacing:.08em;text-transform:uppercase;font-family:'DM Mono',monospace;margin-bottom:7px;}
+.ar-line{font-size:13px;color:var(--text);line-height:1.7;}
+.ar-list{display:flex;flex-direction:column;gap:6px;}
+.ar-actions{display:flex;gap:8px;align-items:center;margin-top:14px;flex-wrap:wrap;}
+.ar-ai-btn{padding:9px 14px;border-radius:99px;background:var(--card);border:1.5px solid var(--sun-border);color:#7a5c00;font-size:12px;font-weight:700;cursor:pointer;font-family:'Noto Sans SC',sans-serif;transition:all .15s;}
+.ar-ai-btn:hover{background:var(--sun);color:#fff;}
+.ar-ai-btn:disabled{opacity:.5;cursor:not-allowed;}
+.ar-ai-status{font-size:12px;color:var(--text3);}
+.ar-ai-box{margin-top:12px;background:#fff;border:1px solid var(--border);border-radius:14px;padding:13px;}
+.voice-review{display:flex;justify-content:flex-end;gap:8px;margin-top:8px;}
+.arc-sec{margin-top:16px;}
+.arc-sec-hd{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:10px;flex-wrap:wrap;}
+.arc-sec-title{font-family:'Noto Serif SC',serif;font-size:18px;font-weight:700;color:var(--text);margin-bottom:4px;}
+.arc-sec-sub{font-size:12px;color:var(--text3);line-height:1.6;}
+.arc-sec-toggle{padding:7px 13px;border-radius:99px;background:var(--card);border:1.5px solid var(--border);color:var(--text2);font-size:12px;font-weight:700;cursor:pointer;font-family:'Noto Sans SC',sans-serif;transition:all .15s;white-space:nowrap;}
+.arc-sec-toggle:hover{border-color:var(--coral-border);color:var(--coral-d);}
+/* record list */
+.arc-list{display:flex;flex-direction:column;gap:10px;}
+.arc-card{background:var(--card);border:1.5px solid var(--border);border-radius:var(--r);padding:15px 16px;cursor:pointer;transition:all .2s;position:relative;box-shadow:var(--shadow-sm);}
+.arc-card:hover{border-color:var(--coral-border);box-shadow:var(--shadow);}
+.arc-card-top{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:10px;}
+.arc-q{font-size:14px;color:var(--text);flex:1;line-height:1.55;}
+.arc-meta{display:flex;align-items:center;gap:6px;flex-shrink:0;}
+.arc-grade{padding:2px 8px;border-radius:99px;font-size:10px;font-weight:700;background:var(--sky-bg);border:1px solid var(--sky-border);color:var(--sky);}
+.arc-date{font-size:10px;color:var(--text3);font-family:'DM Mono',monospace;}
+.arc-tags{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:10px;}
+.atag{padding:3px 8px;border-radius:99px;font-size:10px;background:var(--coral-bg);border:1px solid var(--coral-border);color:var(--coral-d);font-weight:500;}
+/* pending-parent tag */
+.atag.pending{background:var(--sun-bg);border-color:var(--sun-border);color:#7a5c00;}
+.arc-rounds{display:flex;align-items:center;gap:5px;}
+.arc-r-lbl{font-size:10px;color:var(--text3);margin-right:3px;}
+.rnd-dot{width:22px;height:22px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;border:1.5px solid;}
+.rnd-dot.done{background:var(--mint-bg);border-color:var(--mint-border);color:var(--mint);}
+.rnd-dot.due{background:var(--coral-bg);border-color:var(--coral);color:var(--coral-d);animation:dotPulse 2s infinite;}
+.rnd-dot.pend{background:var(--bg2);border-color:var(--border);color:var(--text3);}
+.rnd-line{width:12px;height:2px;background:var(--border);border-radius:1px;}
+.arc-del{position:absolute;top:11px;right:13px;width:24px;height:24px;border-radius:8px;background:transparent;border:1px solid var(--border);color:var(--text3);font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;opacity:0;transition:all .15s;}
+.arc-card:hover .arc-del{opacity:1;}
+.arc-del:hover{background:var(--coral-bg);border-color:var(--coral-border);color:var(--coral-d);}
+.arc-empty{text-align:center;padding:56px 0;}
+.arc-empty-icon{font-size:48px;margin-bottom:12px;}
+.arc-empty-txt{font-size:16px;color:var(--text2);font-weight:500;margin-bottom:4px;}
+.arc-empty-sub{font-size:13px;color:var(--text3);}
+
+/* ── S4: CHALLENGE (变形怪兽 / 验证) ── */
+#s4{background:var(--bg);}
+.chal-wrap{max-width:560px;margin:0 auto;padding:28px 20px 100px;}
+.chal-back{display:inline-flex;align-items:center;gap:5px;font-size:13px;color:var(--text3);cursor:pointer;margin-bottom:18px;transition:color .15s;}
+.chal-back:hover{color:var(--text2);}
+
+/* ── MODALS ── */
+.modal-ov{display:none;position:fixed;inset:0;z-index:500;background:rgba(45,36,23,0.4);backdrop-filter:blur(4px);align-items:center;justify-content:center;padding:20px;}
+.modal-ov.open{display:flex;}
+.modal-box{background:var(--card);border:1.5px solid var(--border);border-radius:22px;max-width:580px;width:100%;max-height:82vh;overflow-y:auto;box-shadow:var(--shadow-lg);}
+.modal-hd{padding:20px 20px 0;display:flex;align-items:flex-start;justify-content:space-between;gap:10px;}
+.modal-ttl{font-size:15px;font-weight:700;color:var(--text);flex:1;line-height:1.55;}
+.modal-x{width:28px;height:28px;border-radius:10px;background:var(--bg2);border:1px solid var(--border);color:var(--text2);font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .15s;}
+.modal-x:hover{background:var(--coral-bg);color:var(--coral-d);}
+.modal-body{padding:16px 20px 20px;}
+.modal-sec{margin-bottom:14px;}
+.modal-sec-lbl{font-size:10px;color:var(--text3);letter-spacing:.08em;text-transform:uppercase;font-family:'DM Mono',monospace;margin-bottom:8px;display:flex;align-items:center;gap:6px;}
+.modal-sec-lbl::after{content:'';flex:1;height:1px;background:var(--border);}
+
+/* grade change modal */
+.grade-modal-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:16px;}
+.monster-modal-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:14px;}
+
+/* ── OUTCOME CARDS (post-review) ── */
+.outcome-wrap{padding:20px 0;}
+/* outcome A: smooth */
+.outcome-a{text-align:center;padding:20px 0 24px;}
+.outcome-trophy{font-size:56px;margin-bottom:10px;}
+.outcome-title{font-family:'Noto Serif SC',serif;font-size:22px;font-weight:700;color:var(--text);margin-bottom:6px;}
+.outcome-sub{font-size:14px;color:var(--text2);margin-bottom:20px;line-height:1.6;}
+.outcome-btn-main{width:100%;padding:15px;border-radius:var(--r);background:linear-gradient(135deg,var(--sun),#e5952a);color:#fff;font-size:15px;font-weight:700;border:none;cursor:pointer;font-family:'Noto Sans SC',sans-serif;box-shadow:0 4px 14px rgba(255,185,48,0.35);margin-bottom:10px;}
+/* outcome B: has weak points */
+.outcome-b-report{background:var(--card);border:1.5px solid var(--border);border-radius:var(--r);padding:18px;margin-bottom:14px;box-shadow:var(--shadow-sm);}
+.outcome-b-hd{font-size:14px;font-weight:700;color:var(--text);margin-bottom:10px;display:flex;align-items:center;gap:7px;}
+.outcome-b-weak{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px;}
+.outcome-b-tag{padding:4px 11px;border-radius:99px;font-size:12px;background:var(--coral-bg);border:1px solid var(--coral-border);color:var(--coral-d);}
+.outcome-b-choice{display:flex;flex-direction:column;gap:8px;}
+.outcome-choice-btn{padding:14px 16px;border-radius:var(--r);font-size:14px;font-weight:700;border:2px solid;cursor:pointer;font-family:'Noto Sans SC',sans-serif;transition:all .2s;display:flex;align-items:center;gap:10px;}
+.choice-continue{background:var(--coral-bg);border-color:var(--coral-border);color:var(--coral-d);}
+.choice-continue:hover{background:var(--coral);color:#fff;}
+.choice-verify{background:var(--sun-bg);border-color:var(--sun-border);color:#7a5c00;}
+.choice-verify:hover{background:var(--sun);color:#fff;}
+/* parent report inside outcome B */
+.parent-report{background:var(--sky-bg);border:1.5px solid var(--sky-border);border-radius:var(--rs);padding:14px 16px;margin-top:12px;}
+.parent-report-hd{font-size:11px;color:var(--sky);font-weight:700;letter-spacing:.05em;text-transform:uppercase;font-family:'DM Mono',monospace;margin-bottom:8px;}
+.parent-report-txt{font-size:13px;color:var(--text);line-height:1.75;}
+/* outcome C: stuck */
+.outcome-c{text-align:center;padding:12px 0 20px;}
+.outcome-c-icon{font-size:44px;margin-bottom:12px;}
+.outcome-c-title{font-size:16px;font-weight:700;color:var(--text);margin-bottom:6px;}
+.outcome-c-sub{font-size:13px;color:var(--text2);line-height:1.65;margin-bottom:18px;}
+.outcome-save-btn{width:100%;padding:14px;border-radius:var(--r);background:var(--sun-bg);border:2px solid var(--sun-border);color:#7a5c00;font-size:14px;font-weight:700;cursor:pointer;font-family:'Noto Sans SC',sans-serif;margin-bottom:8px;transition:all .2s;}
+.outcome-save-btn:hover{background:var(--sun);color:#fff;}
+
+@keyframes bounce{0%{transform:translateY(0)}50%{transform:translateY(-10px)}100%{transform:translateY(0)}}
+@keyframes celebIn{from{opacity:0;transform:translate(-50%,-50%) scale(.6);}to{opacity:1;transform:translate(-50%,-50%) scale(1);}}
+@keyframes bounceIn{from{opacity:0;transform:scale(.5);}to{opacity:1;transform:scale(1);}}
+@keyframes wiggle{0%,100%{transform:rotate(-10deg)}50%{transform:rotate(10deg)}}
+@keyframes fadeOut{from{opacity:1;}to{opacity:0;}}
+@keyframes spin{to{transform:rotate(360deg);}}
+
+#importInput{display:none;}
+::-webkit-scrollbar{width:4px;}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px;}
+
+@media(max-width:500px){
+  .arc-stats{grid-template-columns:1fr 1fr 1fr;}
+  .grade-grid,.grade-modal-grid{grid-template-columns:repeat(3,1fr);}
+}
+</style>
+</head>
+<body>
+
+<!-- ══ OVERLAY: ACCESS CODE ══ -->
+<div class="overlay" id="ovCode">
+  <div class="ov-box">
+    <div class="code-panel">
+      <span class="code-logo">⛏️</span>
+      <div class="code-title">挖金矿</div>
+      <div class="code-desc">输入老师给你的<strong>6位验证码</strong><br>开始让孩子彻底搞懂每一道错题</div>
+      <input id="codeInput" class="code-input" type="text" maxlength="6" placeholder="000000"
+        oninput="this.value=this.value.replace(/[^0-9]/g,'');if(this.value.length===6)verifyCode()"
+        onfocus="this.style.borderColor='var(--coral)'"
+        onblur="this.style.borderColor='var(--border)'">
+      <div id="codeErr" class="code-err"></div>
+      <button class="btn-main" onclick="verifyCode()">进入 →</button>
+      <div class="code-hint">请输入你的专属验证码进入</div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ OVERLAY: GRADE SETUP ══ -->
+<div class="overlay hidden" id="ovSetup">
+  <div class="ov-box">
+    <div class="setup-panel">
+      <div class="setup-step">初次设置</div>
+      <div class="setup-title">孩子现在几年级？</div>
+      <div class="setup-desc">设置好后就不用每次都选了，升年级再改就行。</div>
+      <div class="grade-grid" id="gradeGrid">
+        <button class="g-btn" onclick="pickSetupGrade(this,'一年级')">一年级</button>
+        <button class="g-btn" onclick="pickSetupGrade(this,'二年级')">二年级</button>
+        <button class="g-btn" onclick="pickSetupGrade(this,'三年级')">三年级</button>
+        <button class="g-btn" onclick="pickSetupGrade(this,'四年级')">四年级</button>
+        <button class="g-btn" onclick="pickSetupGrade(this,'五年级')">五年级</button>
+        <button class="g-btn" onclick="pickSetupGrade(this,'六年级')">六年级</button>
+      </div>
+      <div class="exam-section">
+        <div class="exam-title">考试日期（选填，用于安排复习节奏）</div>
+        <div class="exam-row">
+          <div><div class="exam-lbl">期中考试</div><div class="exam-sub">不知道可以跳过，以后再填</div></div>
+          <input type="date" class="exam-date" id="setupMid">
+        </div>
+        <div class="exam-row">
+          <div><div class="exam-lbl">期末考试</div></div>
+          <input type="date" class="exam-date" id="setupFin">
+        </div>
+      </div>
+      <button class="btn-main" id="setupDoneBtn" onclick="finishSetup()" disabled>开始挖金矿 →</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ TOP BAR ══ -->
+<div id="topBar">
+  <div class="brand"><div class="brand-icon">⛏️</div>挖金矿</div>
+  <div class="top-spacer"></div>
+  <div class="due-chip hidden" id="dueChip" onclick="goTo(3)" title="有待复习任务">
+    🔔 <span id="dueChipTxt">0 道待复习</span>
+  </div>
+</div>
+
+<!-- ══ BOTTOM NAV: 2 TABS ══ -->
+<nav id="mainNav">
+  <button class="mtab active" id="tab1" onclick="goTo(1)">
+    <span class="mtab-icon">✏️</span>
+    <span class="mtab-lbl">复盘</span>
+  </button>
+  <button class="mtab" id="tab3" onclick="goTo(3)">
+    <span class="mtab-icon">📚</span>
+    <span class="mtab-lbl">我的错题</span>
+    <span class="mtab-badge hidden" id="arcBadge"></span>
+  </button>
+</nav>
+
+<!-- ══ S1: REVIEW INPUT ══ -->
+<section id="s1" class="screen active">
+  <div class="review-wrap">
+    <!-- due reminders -->
+    <div class="review-due hidden" id="reviewDue">
+      <div class="review-due-hd">
+        <span style="font-size:18px">🔔</span>
+        <span class="review-due-title">有题要复习</span>
+      </div>
+      <div class="due-items" id="dueList"></div>
+    </div>
+
+    <!-- streak display -->
+    <div id="streakBar" style="margin-bottom:18px;display:none">
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 16px;background:var(--card);border:1.5px solid var(--border);border-radius:var(--r);box-shadow:var(--shadow-sm)">
+        <div style="display:flex;align-items:center;gap:10px">
+          <span id="streakFire" style="font-size:24px">🔥</span>
+          <div>
+            <div style="font-size:15px;font-weight:700;color:var(--text)" id="streakDaysText">已连续挖矿 1 天</div>
+            <div style="font-size:11px;color:var(--text3)" id="streakMonthText">本月活跃 1 天</div>
+          </div>
+        </div>
+        <div id="streakTicket" style="display:none;align-items:center;gap:5px;padding:4px 11px;border-radius:99px;background:var(--sun-bg);border:1.5px solid var(--sun-border)">
+          <span style="font-size:14px">🎟️</span>
+          <span style="font-size:11px;font-weight:700;color:#7a5c00" id="streakTicketCount">×1</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="form-ttl">输入一道错题</div>
+    <div class="form-sub">把题目原文输进来，金矿老师会陪孩子一步步把它搞懂。</div>
+
+    <div class="form-blk">
+      <label class="form-lbl">题目内容</label>
+      <textarea id="qInput" class="ftextarea" rows="5" placeholder="例：书架上有科技书和文艺书若干本。若再放入15本科技书，则科技书占总数的1/3……"></textarea>
+      <div class="form-hint">📌 手动输入题目文字即可</div>
+    </div>
+
+    <div class="form-blk">
+      <label class="form-lbl">孩子写的答案（选填）</label>
+      <input id="wAns" class="finput" type="text" placeholder="孩子写了什么？比如：32">
+      <div class="form-hint">填了的话金矿老师能更准确判断孩子错在哪</div>
+    </div>
+
+    <button class="start-btn" id="startBtn" onclick="startReview()">
+      ⛏️ 开始挖金矿
+    </button>
+    <div class="form-err" id="formErr"></div>
+  </div>
+</section>
+
+<!-- ══ S2: CHAT ══ -->
+<section id="s2" class="screen">
+  <div class="chat-strip">
+    <div class="chat-strip-top">
+      <div class="chat-round-pill r1" id="chatRoundTag">第一轮</div>
+      <span class="chat-live"></span>
+      <div class="chat-prog" id="chatProg"></div>
+      <button class="chat-end-btn" id="chatEndBtn" disabled onclick="endChat()">整理报告 →</button>
+    </div>
+    <div class="chat-q-preview" id="chatQPreview" onclick="openQuestionModal()" title="查看完整题目">—</div>
+  </div>
+  <div id="chatErrArea"></div>
+  <div class="chat-messages" id="chatBox"></div>
+  <div class="chat-bar">
+    <div class="voice-status" id="voiceStatus">🎤 按住说话，松开后我会先帮你看一眼识别结果</div>
+    <div class="chat-bar-row">
+      <button class="chat-peek-btn" id="peekBtn" type="button" onclick="openQuestionModal()">题目</button>
+      <textarea class="chat-textarea" id="chatInput" placeholder="回答问题，或按住麦克风说话…" rows="1"></textarea>
+      <button class="voice-btn" id="voiceBtn" title="按住说话">
+        <span class="mic-icon">🎤</span>
+        <span class="mic-label">按住说话</span>
+      </button>
+      <button class="send-btn" id="sendBtn" onclick="sendMsg()">↑</button>
+    </div>
+    <div class="voice-review" id="voiceReview" style="display:none">
+      <button class="chat-peek-btn" type="button" onclick="retryVoiceInput()">重说一次</button>
+      <button class="send-btn" type="button" onclick="confirmVoiceInput()" style="width:auto;padding:0 16px;border-radius:999px">发出去</button>
+    </div>
+    <div class="chat-hint" id="chatHint">💡 推荐直接按住麦克风说，识别后可以改一改，再发出去</div>
+  </div>
+</section>
+
+<!-- ══ S3: ARCHIVE + SETTINGS ══ -->
+<section id="s3" class="screen">
+  <div class="arc-wrap">
+    <div class="arc-hd">
+      <div class="arc-title">我的错题</div>
+      <div class="arc-acts">
+        <button class="arc-btn" onclick="doExport()">⬇ 导出</button>
+        <button class="arc-btn" onclick="document.getElementById('importInput').click()">⬆ 导入</button>
+        <button class="arc-btn danger" onclick="doClear()">🗑 清空</button>
+        <input type="file" id="importInput" accept=".json" onchange="doImport(event)">
+      </div>
+    </div>
+
+    <!-- settings: grade + exam (unobtrusive) -->
+    <div class="arc-settings" id="arcSettings">
+      <div class="arc-set-top" onclick="toggleArcSettings()">
+        <div class="arc-set-title">学习设置</div>
+        <button class="arc-set-toggle" id="arcSetToggle" type="button">展开</button>
+      </div>
+      <div class="arc-set-summary" id="arcSetSummary">—</div>
+      <div class="arc-set-body">
+        <div class="arc-set-row">
+          <div><div class="arc-set-lbl">孩子年级</div></div>
+          <div style="display:flex;align-items:center;gap:8px">
+            <span class="arc-set-val" id="gradeDisplay">—</span>
+            <button class="grade-change-btn" onclick="event.stopPropagation();openGradeModal()">修改</button>
+          </div>
+        </div>
+        <div class="arc-set-row">
+          <div><div class="arc-set-lbl">期中考试</div><div class="arc-set-sub" id="midCd"></div></div>
+          <input type="date" class="arc-set-inp" id="setMid" onchange="refreshCd()">
+        </div>
+        <div class="arc-set-row">
+          <div><div class="arc-set-lbl">期末考试</div><div class="arc-set-sub" id="finCd"></div></div>
+          <input type="date" class="arc-set-inp" id="setFin" onchange="refreshCd()">
+        </div>
+        <div class="arc-set-row" style="border-bottom:none">
+          <div><div class="arc-set-lbl">第二轮间隔</div><div class="arc-set-sub">第一轮后几天提醒</div></div>
+          <select class="arc-set-inp" id="setR2">
+            <option value="3">3天</option><option value="5">5天</option>
+            <option value="7" selected>7天</option><option value="10">10天</option>
+            <option value="14">14天</option>
+          </select>
+        </div>
+        <button class="arc-save-btn" onclick="saveArcSettings()">保存设置</button>
+        <div class="arc-saved" id="arcSaved">✓ 已保存</div>
+      </div>
+    </div>
+
+    <div class="arc-stats" id="arcStats"></div>
+    <div class="archive-report-launch" id="archiveReportLaunch">
+      <div class="ar-title">📋 看看这段时间挖出了什么</div>
+      <div class="ar-sub">先生成一份好懂的人话版总结，再决定要不要继续展开成更详细的藏宝图。</div>
+      <button class="ar-ai-btn" onclick="showArchiveReport()">📋 生成这段时间的挖矿报告</button>
+    </div>
+    <div class="archive-report hidden" id="archiveReport"></div>
+    <div class="weak-cloud-wrap"><div class="wc-ttl">藏金阁</div><div class="wcloud" id="weakCloud"></div></div>
+    <div class="arc-sec">
+      <div class="arc-sec-hd">
+        <div>
+          <div class="arc-sec-title" id="prioritySecTitle">现在先挖</div>
+          <div class="arc-sec-sub">这些题最该先处理，通常是已经到时间了，或者还需要家长一起挖一挖。</div>
+        </div>
+        <button class="arc-sec-toggle" id="priorityToggle" onclick="toggleArchiveGroup('priority')"></button>
+      </div>
+      <div class="arc-list" id="priorityArcList"></div>
+    </div>
+    <div class="arc-sec">
+      <div class="arc-sec-hd">
+        <div>
+          <div class="arc-sec-title" id="activeSecTitle">还在慢慢挖</div>
+          <div class="arc-sec-sub">这些题还在路上，不急着现在处理，但后面还会继续复盘。</div>
+        </div>
+        <button class="arc-sec-toggle" id="activeToggle" onclick="toggleArchiveGroup('active')"></button>
+      </div>
+      <div class="arc-list" id="activeArcList"></div>
+    </div>
+    <div class="arc-sec">
+      <div class="arc-sec-hd">
+        <div>
+          <div class="arc-sec-title" id="masteredSecTitle">已经挖出的金矿</div>
+          <div class="arc-sec-sub">这些题已经三轮走完，而且已经稳定掌握了。</div>
+        </div>
+        <button class="arc-sec-toggle" id="masteredToggle" onclick="toggleArchiveGroup('mastered')"></button>
+      </div>
+      <div class="arc-list" id="masteredArcList"></div>
+    </div>
+  </div>
+</section>
+
+<!-- ══ S4: CHALLENGE / VERIFICATION ══ -->
+<section id="s4" class="screen">
+  <div class="chal-wrap">
+    <div class="chal-back" onclick="goTo(1)">← 返回</div>
+    <div id="chalLoading" style="text-align:center;padding:60px 0">
+      <div style="font-size:48px;margin-bottom:12px;animation:bounce 1s infinite alternate">🐉</div>
+      <div style="font-size:16px;font-weight:700;color:var(--text);margin-bottom:6px">变形怪兽正在现身…</div>
+      <div style="font-size:13px;color:var(--text2)">金矿老师正在出题，准备好了吗？</div>
+    </div>
+    <div id="chalContent" style="display:none">
+      <div id="chalHeader" style="text-align:center;margin-bottom:20px"></div>
+      <div id="chalQList"></div>
+      <button id="chalSubmitBtn" onclick="submitChallenge()" style="display:none;width:100%;padding:16px;border-radius:var(--r);background:linear-gradient(135deg,var(--sun),#e5952a);color:#fff;font-size:16px;font-weight:700;border:none;cursor:pointer;font-family:'Noto Sans SC',sans-serif;box-shadow:0 4px 16px rgba(255,185,48,0.35);margin-top:8px">
+        提交答案 →
+      </button>
+    </div>
+    <div id="chalResult" style="display:none"></div>
+  </div>
+</section>
+
+<!-- detail modal -->
+<div class="modal-ov" id="modalOv" onclick="closeModal(event)">
+  <div class="modal-box">
+    <div class="modal-hd"><div class="modal-ttl" id="modalTtl">—</div><button class="modal-x" onclick="closeModal()">×</button></div>
+    <div class="modal-body" id="modalBody"></div>
+  </div>
+</div>
+
+<!-- grade change modal -->
+<div class="modal-ov" id="gradeOv" onclick="closeGradeModal(event)">
+  <div class="modal-box" style="max-width:380px">
+    <div class="modal-hd"><div class="modal-ttl">修改年级</div><button class="modal-x" onclick="closeGradeModal()">×</button></div>
+    <div class="modal-body">
+      <div class="grade-modal-grid" id="gradeModalGrid"></div>
+      <button class="btn-main" onclick="saveGradeChange()">确认修改</button>
+    </div>
+  </div>
+</div>
+
+<!-- monster name modal -->
+<div class="modal-ov" id="monsterOv" onclick="closeMonsterModal(event)">
+  <div class="modal-box" style="max-width:420px">
+    <div class="modal-hd"><div class="modal-ttl">给怪兽起个名字</div><button class="modal-x" onclick="cancelMonsterModal()">×</button></div>
+    <div class="modal-body">
+      <div style="font-size:14px;color:var(--text2);line-height:1.7;margin-bottom:14px">错题金矿旁边住着一只小怪兽。给它起个名字，挑战的时候会更有趣。</div>
+      <div class="monster-modal-grid" id="monsterQuickGrid"></div>
+      <input id="monsterNameInput" class="finput" type="text" maxlength="8" placeholder="也可以自己起一个，比如：绕绕怪">
+      <div style="font-size:11px;color:var(--text3);margin-top:6px">建议 2-4 个字，孩子一眼就能记住。</div>
+      <div style="display:flex;gap:10px;margin-top:16px">
+        <button class="btn-back" style="flex:1" onclick="cancelMonsterModal()">先用默认名</button>
+        <button class="btn-main" style="flex:1" onclick="confirmMonsterModal()">就叫这个</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════
+//  PROVIDERS (DeepSeek only, hidden from UI)
+// ═══════════════════════════════════════════════
+const PROVIDERS={
+  deepseek:{
+    name:'DeepSeek',validate:k=>k&&k.length>8,
+    defaultModel:'deepseek-chat',
+    async call(k,m,sys,msgs){
+      const r=await fetch('https://api.deepseek.com/v1/chat/completions',{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${k}`},body:JSON.stringify({model:m,max_tokens:800,messages:[{role:'system',content:sys},...msgs]})});
+      if(!r.ok){const e=await r.json();throw new Error(e.error?.message||`HTTP ${r.status}`);}
+      return(await r.json()).choices[0].message.content;
+    },
+    async callJ(k,m,p){
+      const r=await fetch('https://api.deepseek.com/v1/chat/completions',{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${k}`},body:JSON.stringify({model:m,max_tokens:1500,messages:[{role:'user',content:p}]})});
+      if(!r.ok){const e=await r.json();throw new Error(e.error?.message||`HTTP ${r.status}`);}
+      return(await r.json()).choices[0].message.content;
+    }
+  }
+};
+
+// ═══════════════════════════════════════════════
+//  STORAGE
+// ═══════════════════════════════════════════════
+const AK='jinkuang_arc_v7',SK='jinkuang_set_v7',CK='jinkuang_cfg_v7',KK='jinkuang_keys_v7',STRK='jinkuang_streak_v7',MK='jinkuang_monster_v1';
+const loadArc=()=>{try{return JSON.parse(localStorage.getItem(AK)||'[]');}catch{return[];}};
+const saveArc=r=>{localStorage.setItem(AK,JSON.stringify(r));refreshBadge();};
+const loadSet=()=>{try{return JSON.parse(localStorage.getItem(SK)||'{}');}catch{return{};}};
+const saveSet=s=>localStorage.setItem(SK,JSON.stringify(s));
+const loadCfg=()=>{try{return JSON.parse(localStorage.getItem(CK)||'null');}catch{return null;}};
+const saveCfg=c=>localStorage.setItem(CK,JSON.stringify(c));
+const loadKeys=()=>{try{return JSON.parse(localStorage.getItem(KK)||'{}');}catch{return{};}};
+const saveKeys=k=>localStorage.setItem(KK,JSON.stringify(k));
+const loadMonsterName=()=>localStorage.getItem(MK)||'';
+const saveMonsterName=name=>localStorage.setItem(MK,name);
+function formatLocalDate(date){
+  const y=date.getFullYear();
+  const m=String(date.getMonth()+1).padStart(2,'0');
+  const d=String(date.getDate()).padStart(2,'0');
+  return `${y}-${m}-${d}`;
+}
+function parseLocalDate(dateStr){
+  const [y,m,d]=(dateStr||'').split('-').map(Number);
+  if(!y||!m||!d) return null;
+  return new Date(y,m-1,d);
+}
+const today=()=>formatLocalDate(new Date());
+
+// ── STREAK HELPERS ──
+function loadStreak(){
+  try{return JSON.parse(localStorage.getItem(STRK)||'{"days":0,"lastDate":null,"restTickets":0,"monthDays":0,"monthKey":""}');}
+  catch{return{days:0,lastDate:null,restTickets:0,monthDays:0,monthKey:''};}
+}
+function saveStreak(s){localStorage.setItem(STRK,JSON.stringify(s));}
+
+function recordActivityToday(){
+  const t=today();
+  const s=loadStreak();
+  if(s.lastDate===t) return {streak:s, isNew:false, ticketUnlocked:false}; // already recorded today
+
+  const yesterday=addDays(t,-1);
+  const twoDaysAgo=addDays(t,-2);
+  let newDays=s.days;
+  let usedTicket=false;
+
+  if(s.lastDate===yesterday){
+    // consecutive — keep going
+    newDays=s.days+1;
+  } else if(s.lastDate===twoDaysAgo && s.restTickets>0){
+    // one-day gap, use rest ticket automatically
+    newDays=s.days+1;
+    s.restTickets=Math.max(0,s.restTickets-1);
+    usedTicket=true;
+  } else {
+    // reset
+    newDays=1;
+  }
+
+  // monthly tracking
+  const monthKey=t.slice(0,7);
+  const monthDays=(s.monthKey===monthKey?s.monthDays:0)+1;
+
+  // check ticket unlock (every 7 days milestone)
+  const prevMilestone=Math.floor(s.days/7);
+  const newMilestone=Math.floor(newDays/7);
+  const ticketUnlocked=(newMilestone>prevMilestone && newDays>0);
+  if(ticketUnlocked) s.restTickets=(s.restTickets||0)+1;
+
+  const updated={days:newDays, lastDate:t, restTickets:s.restTickets||0, monthDays, monthKey};
+  saveStreak(updated);
+  return{streak:updated, isNew:true, ticketUnlocked, usedTicket};
+}
+const addDays=(d,n)=>{
+  const x=parseLocalDate(d);
+  if(!x) return d;
+  x.setDate(x.getDate()+n);
+  return formatLocalDate(x);
+};
+const daysDiff=(a,b)=>{
+  const da=parseLocalDate(a),db=parseLocalDate(b);
+  if(!da||!db) return 0;
+  return Math.round((db-da)/86400000);
+};
+
+// ═══════════════════════════════════════════════
+//  ACCESS CODE SYSTEM
+// ═══════════════════════════════════════════════
+const _km=(()=>{
+  const m={"886699":"WUABHBYcVElJHUxISgEcHxofH05SE0kZGkoYUhJJTh1MTAA="};
+  const d=s=>{const b=atob(s);let r='';for(let i=0;i<b.length;i++)r+=String.fromCharCode(b.charCodeAt(i)^(42+i%7));return r;};
+  const out={};for(const k in m)out[k]=d(m[k]);return out;
+})();
+
+function verifyCode(){
+  const code=document.getElementById('codeInput').value.trim();
+  const errEl=document.getElementById('codeErr');
+  if(code.length<6){errEl.textContent='请输入完整的6位验证码';return;}
+  const key=_km[code];
+  if(!key){errEl.textContent='验证码不对，请检查后重试';document.getElementById('codeInput').style.borderColor='var(--coral-d)';return;}
+  cfg={provider:'deepseek',key,model:'deepseek-chat'};
+  apiKeys['deepseek']=key;
+  saveCfg(cfg); saveKeys(apiKeys);
+  localStorage.setItem('jinkuang_code_v7',code);
+  document.getElementById('ovCode').classList.add('hidden');
+  // check if grade is set
+  const s=loadSet();
+  if(!s.grade){document.getElementById('ovSetup').classList.remove('hidden');}
+  else{initApp();}
+}
+
+// ═══════════════════════════════════════════════
+//  GRADE SETUP
+// ═══════════════════════════════════════════════
+let setupGrade='';
+function pickSetupGrade(btn,g){
+  document.querySelectorAll('#gradeGrid .g-btn').forEach(b=>b.classList.remove('sel'));
+  btn.classList.add('sel'); setupGrade=g;
+  document.getElementById('setupDoneBtn').disabled=false;
+}
+function finishSetup(){
+  if(!setupGrade) return;
+  const s=loadSet();
+  s.grade=setupGrade;
+  s.midtermDate=document.getElementById('setupMid').value;
+  s.finalDate=document.getElementById('setupFin').value;
+  s.round2Days=7;
+  saveSet(s);
+  grade=setupGrade;
+  document.getElementById('ovSetup').classList.add('hidden');
+  initApp();
+}
+
+// ═══════════════════════════════════════════════
+//  STATE
+// ═══════════════════════════════════════════════
+let cfg={provider:'deepseek',key:'',model:'deepseek-chat'};
+let apiKeys={deepseek:''};
+let grade='',qText='',wAns='';
+let history=[],stage=0,turns=0,round=1,activeId=null;
+let presolvedAnswer='',preSolveConfident=false;
+let passCount=0, totalSteps=0;  // track outcome A vs B
+let stuckCount=0;               // track outcome C
+let monsterName='',monsterModalResolver=null;
+let archiveAiReportCache={key:'',data:null};
+let archiveReportVisible=false;
+let archiveGroupExpanded={priority:false,active:false,mastered:false};
+let arcSettingsOpen=false;
+let challengeHistory=[];
+
+const STAGES_LOW  =['要求什么','用自己的话说','换个数字试试'];
+const STAGES_HIGH =['要求什么','关键条件','先求什么后求什么','费曼讲解','写出算式'];
+function getStages(g){return['四年级','五年级','六年级'].includes(g)?STAGES_HIGH:STAGES_LOW;}
+let STAGES=STAGES_LOW;
+
+// ═══════════════════════════════════════════════
+//  MATH ENGINE (R1 for presolve, hidden from UI)
+// ═══════════════════════════════════════════════
+async function mathEngineCall(prompt){
+  const dsKey=apiKeys['deepseek']||cfg.key;
+  if(!dsKey) return '';
+  // Try R1 first with timeout
+  try{
+    const controller=new AbortController();
+    const timer=setTimeout(()=>controller.abort(),25000);
+    const r=await fetch('https://api.deepseek.com/v1/chat/completions',{
+      method:'POST',signal:controller.signal,
+      headers:{'Content-Type':'application/json','Authorization':`Bearer ${dsKey}`},
+      body:JSON.stringify({model:'deepseek-reasoner',max_tokens:2000,messages:[{role:'user',content:prompt}]})
+    });
+    clearTimeout(timer);
+    if(!r.ok){const e=await r.json();throw new Error(e.error?.message||`HTTP ${r.status}`);}
+    const d=await r.json();
+    const msg=d.choices[0].message;
+    const out=(msg.content||'').trim()||(msg.reasoning_content||'').trim();
+    if(!out) throw new Error('empty');
+    return out;
+  }catch(e){console.warn('R1 failed, falling back to V3:',e.message);}
+  // Fallback to V3
+  try{
+    const r2=await fetch('https://api.deepseek.com/v1/chat/completions',{
+      method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${dsKey}`},
+      body:JSON.stringify({model:'deepseek-chat',max_tokens:1500,messages:[{role:'user',content:prompt}]})
+    });
+    if(!r2.ok){const e=await r2.json();throw new Error(e.error?.message||`HTTP ${r2.status}`);}
+    return(await r2.json()).choices[0].message.content||'';
+  }catch(e2){console.warn('V3 fallback failed:',e2.message);}
+  return '';
+}
+
+// ═══════════════════════════════════════════════
+//  INIT
+// ═══════════════════════════════════════════════
+function initApp(){
+  const saved=loadCfg();
+  if(saved) cfg=saved;
+  cfg.provider='deepseek';
+  const savedKeys=loadKeys();
+  Object.assign(apiKeys,savedKeys);
+  if(cfg.key) apiKeys['deepseek']=cfg.key;
+  const s=loadSet();
+  if(s.grade) grade=s.grade;
+  refreshBadge();
+  renderReviewPage();
+}
+
+// ═══════════════════════════════════════════════
+//  NAVIGATION
+// ═══════════════════════════════════════════════
+function goTo(n){
+  document.getElementById('mainNav').style.display=[2,4].includes(n)?'none':'flex';
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.mtab').forEach(t=>t.classList.remove('active'));
+  document.getElementById('s'+n).classList.add('active');
+  if(n===1){document.getElementById('tab1').classList.add('active');renderReviewPage();}
+  if(n===3){document.getElementById('tab3').classList.add('active');renderArchive();}
+}
+
+// ═══════════════════════════════════════════════
+//  REVIEW PAGE
+// ═══════════════════════════════════════════════
+function renderReviewPage(){
+  renderStreak();
+  const due=getDueTasks();
+  const dueEl=document.getElementById('reviewDue');
+  if(due.length){
+    dueEl.classList.remove('hidden');
+    document.getElementById('dueList').innerHTML=due.map(d=>{
+      const hint=d.round===2?'现在复习':'考前冲刺';
+      return`<div class="due-item" onclick="startFromArchive('${d.rec.id}',${d.round})">
+        <span class="due-badge r${d.round}">第${['','一','二','三'][d.round]}轮</span>
+        <span class="due-q">${d.rec.question}</span>
+        <button class="due-go" onclick="event.stopPropagation();startFromArchive('${d.rec.id}',${d.round})">${hint}</button>
+      </div>`;
+    }).join('');
+  } else {dueEl.classList.add('hidden');}
+}
+
+function getDueTasks(){
+  const t=today(),tasks=[];
+  loadArc().forEach(rec=>{
+    rec.rounds.forEach((rnd,i)=>{
+      if(i===0||rnd.date||!rnd.dueDate) return;
+      if(rnd.dueDate<=t) tasks.push({rec,round:i+1});
+    });
+  });
+  return tasks;
+}
+function refreshBadge(){
+  const due=getDueTasks().length;
+  const badge=document.getElementById('arcBadge');
+  const chip=document.getElementById('dueChip');
+  if(due>0){
+    badge.textContent=due;
+    badge.classList.remove('hidden');
+    chip.classList.remove('hidden');
+    chip.title=`${due}道待复习`;
+    chip.setAttribute('aria-label',`${due}道待复习`);
+    document.getElementById('dueChipTxt').textContent=`${due}道待复习`;
+  } else {
+    badge.classList.add('hidden');
+    chip.classList.add('hidden');
+  }
+}
+
+// ═══════════════════════════════════════════════
+//  START REVIEW
+// ═══════════════════════════════════════════════
+async function startReview(){
+  const err=document.getElementById('formErr');
+  err.style.display='none';
+  const dsKey=apiKeys['deepseek']||cfg.key;
+  if(!dsKey){err.textContent='⚠ 请先输入正确的验证码';err.style.display='block';return;}
+  cfg.key=dsKey; cfg.provider='deepseek';
+  qText=document.getElementById('qInput').value.trim();
+  if(!qText){err.textContent='⚠ 请输入题目内容';err.style.display='block';return;}
+  wAns=document.getElementById('wAns').value.trim();
+  if(!grade){const s=loadSet();grade=s.grade||'五年级';}
+
+  document.getElementById('startBtn').disabled=true;
+  document.getElementById('qInput').disabled=true;
+
+  // Reset state
+  const existingRec=activeId?loadArc().find(r=>r.id===activeId):null;
+  const keepExistingRound1=round===1&&existingRec&&existingRec.question===qText;
+  STAGES=getStages(grade); presolvedAnswer=''; preSolveConfident=false;
+  history=[]; stage=0; turns=0; passCount=0; stuckCount=0;
+  totalSteps=STAGES.length;
+  if(round===1&&!keepExistingRound1) activeId=null;
+  document.getElementById('chatBox').innerHTML='';
+
+  // Setup chat header
+  const tag=document.getElementById('chatRoundTag');
+  tag.textContent=round===1?'第一轮':round===2?'第二轮':'第三轮';
+  tag.className='chat-round-pill r'+round;
+  document.getElementById('chatQPreview').textContent=qText;
+  renderChatProgress();
+  document.getElementById('chatEndBtn').disabled=true;
+  goTo(2);
+
+  // Show thinking placeholder
+  const ph=document.createElement('div');
+  ph.id='thinking-ph'; ph.className='msg ai';
+  ph.innerHTML=`<div class="msg-av">⛏️</div><div>
+    <div class="msg-bub" style="background:var(--sky-bg);border-color:var(--sky-border);color:var(--text2)">
+      <div style="display:flex;align-items:center;gap:8px">
+        <div style="width:14px;height:14px;border-radius:50%;border:2px solid rgba(59,158,255,0.2);border-top-color:var(--sky);animation:spin .8s linear infinite;flex-shrink:0"></div>
+        <span>金矿老师正在研究你的题…</span>
+      </div>
+    </div>
+    <div class="msg-time">${new Date().toLocaleTimeString('zh-CN',{hour:'2-digit',minute:'2-digit'})}</div>
+  </div>`;
+  document.getElementById('chatBox').appendChild(ph);
+  document.getElementById('qInput').disabled=false;
+
+  // Presolve in background
+  const prePrompt=`你是一个严谨的小学数学老师，正在批改作业前先自己解题。
+
+题目：${qText}
+年级：${grade}
+
+请严格按以下四步完成：
+
+【第一步：读题，找已知和未知】
+把题目里给出的信息列出来，明确要求什么。
+
+【第二步：算术解题过程】
+用小学生的算术思路，一步一步推导，每步写清楚在求什么、怎么算、得出什么。
+
+【第三步：验证】
+把结果逐一代回题目每个条件，检查是否符合。
+- 条件1：[内容]→代入→[符合/不符合]
+（有几个条件写几行）
+
+【第四步：结论】
+全部验证通过：VERIFIED 答案是：[答案]
+有条件不通过：UNVERIFIED 解题有误`;
+
+  mathEngineCall(prePrompt).then(async raw=>{
+    presolvedAnswer=raw||'';
+    preSolveConfident=!!raw&&raw.includes('VERIFIED')&&!raw.includes('UNVERIFIED');
+    const phEl=document.getElementById('thinking-ph');
+    if(!phEl) return;
+    const bub=phEl.querySelector('.msg-bub');
+    if(preSolveConfident){
+      bub.style.background='var(--mint-bg)';
+      bub.style.borderColor='var(--mint-border)';
+      bub.style.color='#1a8f6a';
+      bub.innerHTML='✓ 金矿老师已研究好，咱们开始吧！';
+      await new Promise(r=>setTimeout(r,700));
+      if(document.getElementById('thinking-ph')) phEl.remove();
+    } else {
+      phEl.remove();
+    }
+  }).catch(()=>{
+    presolvedAnswer='';
+    preSolveConfident=false;
+    const phEl=document.getElementById('thinking-ph');
+    if(phEl) phEl.remove();
+  });
+
+  setChat(true); await aiChat(); setChat(false);
+  document.getElementById('chatInput').focus();
+}
+
+// ═══════════════════════════════════════════════
+//  CHAT SEND
+// ═══════════════════════════════════════════════
+async function sendMsg(){
+  const el=document.getElementById('chatInput');
+  const txt=el.value.trim();
+  if(!txt||el.disabled) return;
+  el.value=''; el.style.height='auto';
+  addMsg('user',txt);
+  history.push({role:'user',content:txt});
+  turns++;
+  if(turns>=3) document.getElementById('chatEndBtn').disabled=false;
+  setChat(true); showTyping();
+  await aiChat();
+  removeTyping(); setChat(false);
+  document.getElementById('chatInput').focus();
+}
+
+// ═══════════════════════════════════════════════
+//  AI CHAT
+// ═══════════════════════════════════════════════
+async function aiChat(){
+  const roundNote={
+    1:'这是第一次复盘。',
+    2:'这是第二轮复习（约一周后）。请在合适时机提及上次的薄弱点，观察孩子是否有改善。',
+    3:'这是第三轮考前复习。请重点检验孩子是否真正掌握，适当增加难度确认。'
+  }[round];
+
+  let anchorNote='';
+  if(presolvedAnswer&&preSolveConfident){
+    anchorNote=`
+
+【正确答案锚点 — 已验证，不可违反】
+${presolvedAnswer}
+
+铁律：孩子回答与上述解答不符时，不能说"对""嗯""有道理"，只能说"我们来验证一下"，引导孩子自己发现错误。即使孩子坚持，也不妥协。不要直接给答案，要引导推导。`;
+  } else {
+    anchorNote=`
+
+【纯引导模式】不对孩子的具体数字作对错判断，专注引导思路，结尾建议和家长确认答案。`;
+  }
+
+  const sys=`你是小学数学错题复盘的"金矿老师"，说话风格轻松活泼，像有耐心的大哥哥/大姐姐。
+年级：${grade}
+题目：${qText}
+${wAns?`孩子之前写的答案：${wAns}`:''}
+${roundNote}${anchorNote}
+
+【核心原则】
+每次孩子回复后，先判断属于哪种情况再回应：
+■ 情况A：答对/基本正确 → 具体鼓励（说清楚哪里对）+ [PASS] + 推进下一步
+■ 情况B：方向对但不完整 → 肯定已答对的部分，追问缺失处
+■ 情况C：答错/答不出来
+  - 第一次：给轻量线索
+  - 第二次：更直接的提示
+  - 连续3次答不出：温和说"这道题有点难，要不要先保存，等和家长一起看？"然后输出 [STUCK]
+
+【灵活应变】
+□ 孩子拒绝"教同桌" → 立刻换成直接验证
+□ 孩子说"我已经讲过了" → 基于他说过的内容追问更深，不让他重复
+□ 孩子主动要求出题 → 立刻出一道变式题，答完批改，然后输出 [CHALLENGE_READY]
+□ 孩子说"懂了" → 快速验证（让他说答案+理由），通过了就结束
+
+【其他规范】
+一次只问一个问题；不责备；语言口语化；每次2-3句；信息说过了不让重复
+
+【复盘步骤】
+${['四年级','五年级','六年级'].includes(grade)?
+`【高年级5步】
+1. 这道题最后要求什么？
+2. 题目给了哪些关键信息？
+3. 应该先求什么再求什么？
+4. 费曼讲解（脚手架式填空）：
+   先说"假设你同桌做错了，你来教他——"
+   「这道题要求的是……」→「题目告诉了……」→「关键是先想……」→「所以答案是……因为……」
+   卡住了换倒推问法：从他答对的最后一步问"为什么这样算？"
+5. 把算式写出来，每步说在求什么`
+:
+`【低年级3步】
+1. 这道题最后要求什么？
+2. 脚手架讲解：「这道题问的是……」「我是这样算的：先……再……」「所以答案是……」
+3. 换个数字还会吗？出一道简单变式`}
+
+【结束标记规则】
+- 答对一步 → 回复末尾加 [PASS]（孩子看不到）
+- 所有步骤完成 / 孩子主动出题答对了 / 快速验证通过 → 说结束语后加 [CHALLENGE_READY]
+- 连续卡住3次 → 加 [STUCK]
+结束语："恭喜你攻克了这道题！💪 你已经把它彻底搞懂啦！"`;
+
+  const msgs=history.length>0?history:[{role:'user',content:'我们开始吧'}];
+  try{
+    const txt=await PROVIDERS['deepseek'].call(cfg.key,cfg.model,sys,msgs);
+    history.push({role:'assistant',content:txt});
+
+    const hasPass=txt.includes('[PASS]');
+    const hasChallenge=txt.includes('[CHALLENGE_READY]');
+    const hasStuck=txt.includes('[STUCK]');
+    const cleaned=txt.replace('[PASS]','').replace('[CHALLENGE_READY]','').replace('[STUCK]','').trim();
+
+    if(hasChallenge){
+      addMsg('ai',cleaned);
+      ensureArchiveSaved();
+      generateResultSilent();
+      // determine outcome: A (all pass) or B (some missed)
+      showOutcome();
+    } else if(hasStuck){
+      addMsg('ai',cleaned);
+      ensureArchiveSaved();
+      showOutcomeC();
+    } else {
+      addMsg('ai',cleaned);
+    }
+
+    if(hasPass){
+      passCount++;
+      if(stage<STAGES.length-1) stage++;
+      renderChatProgress();
+      showPassEffect();
+    }
+    // track stuck
+    if(!hasPass&&!hasChallenge&&!hasStuck&&turns>0) stuckCount++;
+    else stuckCount=0;
+
+  }catch(e){showChatErr(`金矿老师暂时出了点问题，请重试`);}
+}
+
+// ═══════════════════════════════════════════════
+//  OUTCOME STATES
+// ═══════════════════════════════════════════════
+function showOutcome(){
+  const isSmooth = passCount >= totalSteps;
+  const outcomeType = isSmooth ? 'A' : 'B';
+
+  // record streak and trigger celebration
+  const streakResult = recordActivityToday();
+  setTimeout(()=>showCelebration(outcomeType, streakResult), 400);
+
+  const box=document.getElementById('chatBox');
+  const el=document.createElement('div');
+  el.style.padding='8px 0';
+
+  if(isSmooth){
+    el.innerHTML=`
+      <div style="background:linear-gradient(135deg,#fff8e6,#fff2ef);border:2px solid #ffb930;border-radius:18px;padding:20px">
+        <div style="text-align:center;margin-bottom:16px">
+          <div style="font-size:36px;margin-bottom:8px">🏆</div>
+          <div style="font-size:16px;font-weight:700;color:#2d2417;margin-bottom:4px">挖到金子啦！</div>
+          <div style="font-size:13px;color:#7a6f60">这块错题金矿已经被你挖出来了，继续往前挖吧！</div>
+        </div>
+        <button onclick="startChallenge()" style="width:100%;padding:13px;border-radius:var(--r);background:linear-gradient(135deg,#ffb930,#e5952a);color:#fff;font-size:15px;font-weight:700;border:none;cursor:pointer;font-family:'Noto Sans SC',sans-serif;box-shadow:0 4px 14px rgba(255,185,48,0.4);margin-bottom:10px">⚔️ 挑战变形怪兽！</button>
+        <!-- 家长报告（折叠） -->
+        <div style="border-top:1px solid var(--sun-border);padding-top:10px;margin-top:4px">
+          <div onclick="toggleParentReport(this)" style="display:flex;align-items:center;justify-content:space-between;cursor:pointer;padding:4px 0">
+            <span class="report-toggle-text" style="font-size:12px;color:#b8ad9e">📋 家长报告 · 点击查看 ▾</span>
+          </div>
+          <div class="parent-report-content" style="display:none;margin-top:10px;background:var(--sky-bg);border:1.5px solid var(--sky-border);border-radius:var(--rs);padding:12px 14px">
+            <div style="font-size:11px;color:var(--sky);font-weight:700;letter-spacing:.05em;text-transform:uppercase;font-family:'DM Mono',monospace;margin-bottom:8px">给家长</div>
+            <div data-parent-report style="font-size:13px;color:var(--text);line-height:1.75">孩子今天表现很出色，每一个解题步骤都独立思考完成，没有跳步骤。这说明对这类题型的理解已经比较扎实。建议下次遇到同类题时让孩子独立完成，检验是否真正内化。</div>
+          </div>
+        </div>
+      </div>`;
+  } else {
+    el.innerHTML=`
+      <div style="background:var(--card);border:1.5px solid var(--border);border-radius:18px;padding:18px;box-shadow:var(--shadow-sm)">
+        <div style="text-align:center;margin-bottom:14px">
+          <div style="font-size:32px;margin-bottom:6px">⭐</div>
+          <div style="font-size:15px;font-weight:700;color:var(--text);margin-bottom:4px">差一点就挖到了！</div>
+          <div style="font-size:13px;color:var(--text2)">这块矿石已经松了，再补一下这一步，就快拿下啦。</div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:14px">
+          <button onclick="continueDeepen()" style="padding:13px 16px;border-radius:var(--r);background:var(--coral-bg);border:2px solid var(--coral-border);color:var(--coral-d);font-size:14px;font-weight:700;cursor:pointer;font-family:'Noto Sans SC',sans-serif;text-align:left">
+            🔍 回去再挖一下这一步
+          </button>
+          <button onclick="startChallenge()" style="padding:13px 16px;border-radius:var(--r);background:var(--sun-bg);border:2px solid var(--sun-border);color:#7a5c00;font-size:14px;font-weight:700;cursor:pointer;font-family:'Noto Sans SC',sans-serif;text-align:left">
+            ⚔️ 先去试试能不能挖出来
+          </button>
+        </div>
+        <!-- 家长报告（折叠） -->
+        <div style="border-top:1px solid var(--border);padding-top:10px">
+          <div onclick="toggleParentReport(this)" style="display:flex;align-items:center;justify-content:space-between;cursor:pointer;padding:4px 0">
+            <span class="report-toggle-text" style="font-size:12px;color:#b8ad9e">📋 家长报告 · 点击查看 ▾</span>
+          </div>
+          <div class="parent-report-content" style="display:none;margin-top:10px;background:var(--sky-bg);border:1.5px solid var(--sky-border);border-radius:var(--rs);padding:12px 14px">
+            <div style="font-size:11px;color:var(--sky);font-weight:700;letter-spacing:.05em;text-transform:uppercase;font-family:'DM Mono',monospace;margin-bottom:8px">给家长</div>
+            <div data-parent-report style="font-size:13px;color:var(--text);line-height:1.75">孩子今天完成了这道题的复盘，整体思路方向是对的。有1-2个步骤需要金矿老师给了提示才完成，这是正常的。建议今晚可以让孩子用自己的话再讲一遍解题过程，10分钟就够。</div>
+          </div>
+        </div>
+      </div>`;
+  }
+  box.appendChild(el);
+  box.scrollTop=box.scrollHeight;
+  document.getElementById('chatEndBtn').disabled=false;
+}
+
+function toggleParentReport(header){
+  const content=header.nextElementSibling;
+  const isOpen=content.style.display!=='none';
+  content.style.display=isOpen?'none':'block';
+  const toggleText=header.querySelector('.report-toggle-text');
+  if(toggleText) toggleText.textContent=isOpen?'📋 家长报告 · 点击查看 ▾':'📋 家长报告 · 收起 ▴';
+}
+
+function showOutcomeC(){
+  const box=document.getElementById('chatBox');
+  const el=document.createElement('div');
+  el.style.padding='8px 0';
+  el.innerHTML=`
+    <div style="background:var(--sun-bg);border:2px solid var(--sun-border);border-radius:18px;padding:18px;text-align:center">
+      <div style="font-size:36px;margin-bottom:8px">💪</div>
+      <div style="font-size:15px;font-weight:700;color:#2d2417;margin-bottom:6px">这块矿有点硬，没关系</div>
+      <div style="font-size:13px;color:#7a6f60;line-height:1.65;margin-bottom:14px">先把这道错题存起来，等会儿和家长一起挖也可以。金矿不会跑掉的。</div>
+      <button onclick="saveAndGoHome()" style="width:100%;padding:13px;border-radius:var(--r);background:var(--sun);color:#fff;font-size:14px;font-weight:700;border:none;cursor:pointer;font-family:'Noto Sans SC',sans-serif;box-shadow:0 4px 12px rgba(255,185,48,0.3)">📌 先存起来，等会儿再挖</button>
+    </div>`;
+  box.appendChild(el);
+  box.scrollTop=box.scrollHeight;
+}
+
+function continueDeepen(){
+  // Just re-enable input so AI continues with more focused questioning
+  setChat(false);
+  document.getElementById('chatInput').focus();
+  // Send a system nudge via the next aiChat call
+  history.push({role:'user',content:'我想回去再挖一下这一步'});
+  addMsg('user','我想回去再挖一下这一步');
+  turns++;
+  setChat(true); showTyping();
+  aiChat().then(()=>{removeTyping();setChat(false);document.getElementById('chatInput').focus();});
+}
+
+function saveAndGoHome(){
+  ensureArchiveSaved();
+  // mark as pending-parent
+  const recs=loadArc();
+  const idx=recs.findIndex(r=>r.id===activeId);
+  if(idx!==-1){recs[idx].pendingParent=true;saveArc(recs);}
+  resetReview();
+  goTo(1);
+}
+
+async function endChat(){
+  document.getElementById('chatEndBtn').disabled=true;
+  ensureArchiveSaved();
+  setChat(true);
+  // navigate to a simple result view inline (no separate screen)
+  goTo(4);
+  document.getElementById('chalLoading').style.display='block';
+  document.getElementById('chalLoading').innerHTML=`
+    <div style="font-size:40px;margin-bottom:12px">📋</div>
+    <div style="font-size:16px;font-weight:700;color:var(--text);margin-bottom:6px">生成复盘报告…</div>
+    <div style="font-size:13px;color:var(--text2)">金矿老师正在整理分析</div>`;
+  document.getElementById('chalContent').style.display='none';
+  document.getElementById('chalResult').style.display='none';
+  await generateResult();
+}
+
+// ═══════════════════════════════════════════════
+//  GENERATE RESULT
+// ═══════════════════════════════════════════════
+async function generateResult(){
+  const conv=history.map(m=>`${m.role==='user'?'孩子':'AI'}：${m.content}`).join('\n\n');
+  let prevCtx='';
+  if(round>1&&activeId){
+    const rec=loadArc().find(r=>r.id===activeId);
+    if(rec){const prev=rec.rounds[round-2];if(prev?.result) prevCtx=`\n\n【上一轮薄弱点】${(prev.result.weak_points||[]).map(w=>humanizeWeakName(w.name)).join('、')}`;}
+  }
+  const cmpInstr=round>1?`,"progress_comparison":[{"name":"薄弱点名","status":"improved或persists","note":"一句话"}]`:'';
+  const prompt=`你是小学数学学习分析师。严格输出JSON对象，第一个字符必须是{，最后一个字符必须是}，绝对不能有任何前缀文字。
+年级：${grade} 题目：${qText} ${wAns?'孩子答案：'+wAns:''}${prevCtx}
+对话：\n${conv}
+输出：{"summary":"一句话总结","performance":{"goal_identification":true,"condition_identification":true,"step_order":false,"verbal_expression":true,"equation_expression":true},"weak_points":[{"name":"名称","desc":"20字内"}],"next_plan":["建议1","建议2"],"parent_advice":"50字内"${cmpInstr}}`;
+  try{
+    let raw=await PROVIDERS['deepseek'].callJ(cfg.key,cfg.model,prompt);
+    const js=raw.indexOf('{'),je=raw.lastIndexOf('}');
+    if(js===-1||je===-1) throw new Error('格式错误');
+    const result=JSON.parse(raw.slice(js,je+1));
+    if(Array.isArray(result.weak_points)) result.weak_points=result.weak_points.map(humanizeWeakPoint);
+    saveRound(result);
+    renderResult(result);
+  }catch(e){
+    document.getElementById('chalLoading').style.display='none';
+    document.getElementById('chalResult').style.display='block';
+    document.getElementById('chalResult').innerHTML=`<div style="padding:40px;text-align:center;color:var(--coral-d)">⚠ ${e.message}<br><br><button onclick="generateResult()" style="padding:10px 20px;border-radius:99px;background:var(--coral);color:#fff;border:none;cursor:pointer;font-weight:700;font-family:'Noto Sans SC',sans-serif">重试</button></div>`;
+  }
+}
+
+async function generateResultSilent(){
+  try{
+    const conv=history.map(m=>`${m.role==='user'?'孩子':'AI'}：${m.content}`).join('\n\n');
+    const prompt='你是小学数学学习分析师。严格输出JSON对象，第一个字符必须是{，最后一个字符必须是}。\n年级：'+grade+' 题目：'+qText+(wAns?' 孩子答案：'+wAns:'')+'\n对话：\n'+conv+'\n输出：{"summary":"一句话总结","performance":{"goal_identification":true,"condition_identification":true,"step_order":false,"verbal_expression":true,"equation_expression":true},"weak_points":[{"name":"名称","desc":"20字内"}],"next_plan":["建议1","建议2"],"parent_advice":"50字内"}';
+    let raw=await PROVIDERS['deepseek'].callJ(cfg.key,cfg.model,prompt);
+    const js=raw.indexOf('{'),je=raw.lastIndexOf('}');
+    if(js===-1||je===-1) return;
+    const result=JSON.parse(raw.slice(js,je+1));
+    if(Array.isArray(result.weak_points)) result.weak_points=result.weak_points.map(humanizeWeakPoint);
+    const recs=loadArc();
+    const idx=recs.findIndex(r=>r.id===activeId);
+    if(idx!==-1){recs[idx].rounds[round-1].result=result;saveArc(recs);}
+    hydrateOutcomeReport(result.parent_advice);
+  }catch(e){console.warn('Silent result failed:',e.message);}
+}
+function hydrateOutcomeReport(text){
+  if(!text) return;
+  document.querySelectorAll('[data-parent-report]').forEach(el=>{el.textContent=text;});
+}
+
+function renderResult(r){
+  document.getElementById('chalLoading').style.display='none';
+  document.getElementById('chalResult').style.display='block';
+  const wps=r.weak_points||[];
+  const plans=r.next_plan||[];
+  const wicons=['⚡','🗺️','🔗','📋','💬'];
+
+  let html=`
+  <div style="text-align:center;padding:16px 0 20px">
+    <div style="font-size:42px;margin-bottom:8px">📋</div>
+    <div style="font-family:'Noto Serif SC',serif;font-size:20px;font-weight:700;color:var(--text);margin-bottom:4px">复盘报告</div>
+    <div style="font-size:13px;color:var(--text2)">${grade} · ${r.summary||''}</div>
+  </div>
+  <div style="background:var(--card);border:1.5px solid var(--border);border-radius:var(--r);padding:16px;margin-bottom:12px;box-shadow:var(--shadow-sm)">
+    <div style="font-size:11px;color:var(--text3);letter-spacing:.08em;text-transform:uppercase;font-family:'DM Mono',monospace;margin-bottom:10px;display:flex;align-items:center;gap:6px">主要薄弱点<span style="flex:1;height:1px;background:var(--border);display:block"></span></div>
+    ${wps.length?wps.map((w,i)=>`<div style="display:flex;align-items:flex-start;gap:9px;padding:9px 11px;border-radius:var(--rs);background:var(--coral-bg);border:1px solid var(--coral-border);margin-bottom:7px"><div style="font-size:14px;flex-shrink:0">${wicons[i%5]}</div><div><div style="font-size:13px;color:var(--text);font-weight:700;margin-bottom:2px">${w.name}</div><div style="font-size:12px;color:var(--text2);line-height:1.55">${w.desc}</div></div></div>`).join(''):'<div style="color:var(--text3);font-size:13px;padding:6px 0">没有明显薄弱点 🎉</div>'}
+  </div>
+  <div style="background:var(--sun-bg);border:1.5px solid var(--sun-border);border-radius:var(--r);padding:16px;margin-bottom:12px;box-shadow:var(--shadow-sm)">
+    <div style="font-size:11px;color:var(--text3);letter-spacing:.08em;text-transform:uppercase;font-family:'DM Mono',monospace;margin-bottom:10px;display:flex;align-items:center;gap:6px">下一步<span style="flex:1;height:1px;background:var(--sun-border);display:block"></span></div>
+    ${(plans.length?plans:['先让孩子用自己的话再讲一遍这道题，时间控制在 10 分钟内']).map((p,i)=>`<div style="display:flex;align-items:flex-start;gap:9px;padding:9px 11px;border-radius:var(--rs);background:rgba(255,255,255,0.6);border:1px solid var(--sun-border);margin-bottom:7px"><div style="width:20px;height:20px;border-radius:8px;background:var(--sun);color:#fff;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;flex-shrink:0;margin-top:1px">${i+1}</div><div style="font-size:13px;color:var(--text2);line-height:1.65">${p}</div></div>`).join('')}
+  </div>
+  <div style="background:var(--sky-bg);border:1.5px solid var(--sky-border);border-radius:var(--r);padding:16px;margin-bottom:20px;box-shadow:var(--shadow-sm)">
+    <div style="font-size:11px;color:var(--sky);font-weight:700;letter-spacing:.05em;text-transform:uppercase;font-family:'DM Mono',monospace;margin-bottom:8px">给家长</div>
+    <div style="font-size:14px;color:var(--text);line-height:1.8">${r.parent_advice||''}</div>
+  </div>
+  <div style="display:flex;flex-direction:column;gap:8px">
+    <button onclick="startChallenge()" style="width:100%;padding:14px;border-radius:var(--r);background:linear-gradient(135deg,var(--sun),#e5952a);color:#fff;font-size:15px;font-weight:700;border:none;cursor:pointer;font-family:'Noto Sans SC',sans-serif;box-shadow:0 4px 14px rgba(255,185,48,0.3)">⚔️ 挑战变形怪兽</button>
+    <button onclick="resetAndGoHome()" style="width:100%;padding:13px;border-radius:var(--r);background:transparent;border:1.5px solid var(--border2);color:var(--text2);font-size:14px;cursor:pointer;font-family:'Noto Sans SC',sans-serif">复盘下一题</button>
+  </div>`;
+
+  document.getElementById('chalResult').innerHTML=html;
+  // record streak if not already recorded today
+  const sr2=recordActivityToday();
+  if(sr2.isNew) setTimeout(()=>{renderStreak();if(sr2.ticketUnlocked)showTicketUnlock(sr2.streak.days);},300);
+}
+
+// ═══════════════════════════════════════════════
+//  SAVE ROUND
+// ═══════════════════════════════════════════════
+function saveRound(result){
+  const s=loadSet();const r2d=parseInt(s.round2Days||7);const t=today();
+  const nextExam=getNextExam();
+  if(round===1){
+    if(activeId){
+      const recs=loadArc();const idx=recs.findIndex(r=>r.id===activeId);
+      if(idx!==-1){recs[idx].rounds[0].result=result;recs[idx].pendingParent=false;saveArc(recs);}
+      return;
+    }
+    const rec={id:Date.now().toString(),grade,question:qText,wrongAnswer:wAns,
+      rounds:[{round:1,date:t,result,dueDate:t},{round:2,date:null,result:null,dueDate:addDays(t,r2d)},{round:3,date:null,result:null,dueDate:nextExam?addDays(nextExam,-3):null}],
+      provider:'deepseek',model:cfg.model,pendingParent:false};
+    const recs=loadArc();recs.unshift(rec);saveArc(recs);activeId=rec.id;
+  } else {
+    const recs=loadArc();const idx=recs.findIndex(r=>r.id===activeId);
+    if(idx!==-1){recs[idx].rounds[round-1].date=t;recs[idx].rounds[round-1].result=result;saveArc(recs);}
+  }
+}
+function buildVerificationResult(evals){
+  const wrongIndexes=[];
+  evals.forEach((ev,i)=>{if(!ev?.correct) wrongIndexes.push(i+1);});
+  const allCorrect=wrongIndexes.length===0;
+  const phaseText=round===2?'第二轮验证':'第三轮冲刺';
+  return {
+    summary:allCorrect?`${phaseText}通过`:`${phaseText}发现仍有薄弱点`,
+    weak_points:wrongIndexes.map(i=>({name:`变式题${i}`,desc:'这道验证题还需要再巩固'})),
+    next_plan:allCorrect?['可以间隔一天再快速口头复述一次思路']:['回到深度复盘，再把没讲顺的地方重新讲一遍'],
+    parent_advice:allCorrect?'孩子在直接验证里表现稳定，这类题已经比较扎实。考前只需要短时间回顾即可。':'孩子在直接验证时还有卡点，建议今晚和孩子一起把出错那题再讲一遍，重点说清先求什么后求什么。',
+    verification:evals
+  };
+}
+function getNextExam(){
+  const s=loadSet();const t=today();
+  return[s.midtermDate,s.finalDate].filter(Boolean).filter(d=>d>t).sort()[0]||null;
+}
+function saveChallengeMistakes(evals){
+  const wrongItems=challengeQuestions
+    .map((q,i)=>({question:q.question,wrongAnswer:q.answer,ev:evals[i]}))
+    .filter(item=>item.ev&&!item.ev.correct&&item.question);
+  if(!wrongItems.length) return 0;
+  const s=loadSet();
+  const r2d=parseInt(s.round2Days||7);
+  const t=today();
+  const nextExam=getNextExam();
+  const recs=loadArc();
+  let added=0;
+  wrongItems.forEach(item=>{
+    const exists=recs.find(r=>r.question===item.question);
+    if(exists){
+      if(!exists.wrongAnswer) exists.wrongAnswer=item.wrongAnswer||'';
+      return;
+    }
+    recs.unshift({
+      id:`${Date.now()}_${Math.random().toString(36).slice(2,7)}`,
+      grade,
+      question:item.question,
+      wrongAnswer:item.wrongAnswer||'',
+      rounds:[
+        {round:1,date:null,result:null,dueDate:t},
+        {round:2,date:null,result:null,dueDate:addDays(t,r2d)},
+        {round:3,date:null,result:null,dueDate:nextExam?addDays(nextExam,-3):null}
+      ],
+      provider:'deepseek',
+      model:cfg.model,
+      pendingParent:false,
+      fromChallenge:true
+    });
+    added++;
+  });
+  saveArc(recs);
+  return added;
+}
+function ensureArchiveSaved(){
+  if(round!==1||activeId) return;
+  const s=loadSet();const r2d=parseInt(s.round2Days||7);const t=today();const nextExam=getNextExam();
+  const rec={id:Date.now().toString(),grade,question:qText,wrongAnswer:wAns,
+    rounds:[{round:1,date:t,result:null,dueDate:t},{round:2,date:null,result:null,dueDate:addDays(t,r2d)},{round:3,date:null,result:null,dueDate:nextExam?addDays(nextExam,-3):null}],
+    provider:'deepseek',model:cfg.model};
+  const recs=loadArc();recs.unshift(rec);saveArc(recs);activeId=rec.id;
+}
+
+function getMonsterName(){
+  return monsterName||loadMonsterName()||'绕绕怪';
+}
+function renderMonsterQuickOptions(selected=''){
+  const names=['绕绕怪','迷糊矿虫','分数石怪','应用题喷火龙'];
+  const grid=document.getElementById('monsterQuickGrid');
+  if(!grid) return;
+  grid.innerHTML=names.map(name=>`<button class="g-btn ${selected===name?'sel':''}" onclick="pickMonsterQuick(this,'${name}')">${name}</button>`).join('');
+}
+function pickMonsterQuick(btn,name){
+  document.querySelectorAll('#monsterQuickGrid .g-btn').forEach(b=>b.classList.remove('sel'));
+  btn.classList.add('sel');
+  document.getElementById('monsterNameInput').value=name;
+}
+function openMonsterModal(allowCancel=false){
+  renderMonsterQuickOptions(monsterName||loadMonsterName());
+  const input=document.getElementById('monsterNameInput');
+  input.value=monsterName||loadMonsterName()||'';
+  document.getElementById('monsterOv').classList.add('open');
+  document.querySelector('#monsterOv .btn-back').textContent=allowCancel?'先用默认名':'跳过';
+  setTimeout(()=>input.focus(),50);
+}
+function closeMonsterModal(e){
+  if(!e||e.target===document.getElementById('monsterOv')) cancelMonsterModal();
+}
+function confirmMonsterModal(){
+  const raw=document.getElementById('monsterNameInput').value.trim();
+  const name=(raw||'绕绕怪').slice(0,8);
+  monsterName=name;
+  saveMonsterName(name);
+  document.getElementById('monsterOv').classList.remove('open');
+  if(monsterModalResolver){const resolve=monsterModalResolver;monsterModalResolver=null;resolve(name);}
+}
+function cancelMonsterModal(){
+  const name=loadMonsterName()||'绕绕怪';
+  monsterName=name;
+  saveMonsterName(name);
+  document.getElementById('monsterOv').classList.remove('open');
+  if(monsterModalResolver){const resolve=monsterModalResolver;monsterModalResolver=null;resolve(name);}
+}
+function ensureMonsterName(){
+  monsterName=loadMonsterName()||monsterName;
+  if(monsterName) return Promise.resolve(monsterName);
+  return new Promise(resolve=>{
+    monsterModalResolver=resolve;
+    openMonsterModal(true);
+  });
+}
+function normalizeQuestionForCompare(text){
+  return String(text||'')
+    .replace(/\d+/g,'#')
+    .replace(/[，。,．；：、“”""''（）()\s]/g,'')
+    .trim();
+}
+function isQuestionTooSimilar(question, historyList=[]){
+  const normalized=normalizeQuestionForCompare(question);
+  if(!normalized) return false;
+  return historyList.some(prev=>normalizeQuestionForCompare(prev)===normalized);
+}
+function rememberChallengeQuestion(question){
+  const raw=String(question||'').trim();
+  if(!raw) return;
+  challengeHistory=[raw,...challengeHistory.filter(item=>item!==raw)].slice(0,6);
+}
+
+// ═══════════════════════════════════════════════
+//  CHALLENGE (变形怪兽)
+// ═══════════════════════════════════════════════
+let challengeQuestions=[];
+async function startChallenge(){
+  await ensureMonsterName();
+  goTo(4);
+  const load=document.getElementById('chalLoading');
+  load.style.display='block';
+  load.innerHTML=`<div style="font-size:48px;margin-bottom:12px;animation:bounce 1s infinite alternate">🐉</div><div style="font-size:16px;font-weight:700;color:var(--text);margin-bottom:6px">${getMonsterName()} 正在现身…</div><div style="font-size:13px;color:var(--text2)">金矿老师正在出题</div>`;
+  document.getElementById('chalContent').style.display='none';
+  document.getElementById('chalResult').style.display='none';
+  challengeQuestions=[];
+  await generateChallengeQuestions();
+}
+
+async function generateChallengeQuestions(){
+  const knowledgeCtx=presolvedAnswer?'已预解题参考：'+presolvedAnswer.slice(0,200):'请根据题目判断';
+  const previousSet=challengeHistory.length?`\n最近已经出过这些题，请不要重复，也不要只改一两个字：\n- ${challengeHistory.join('\n- ')}`:'';
+  const prompt=`你是小学数学老师，生成1道变式题让孩子巩固同一知识点。
+
+原题：${qText}
+年级：${grade}
+知识点参考：${knowledgeCtx}
+${previousSet}
+
+要求：改变数字和场景，考查相同思路，难度相当，语言清晰，必须和最近已经出过的题明显不同。
+  你必须直接输出JSON数组，第一个字符必须是[，最后一个字符必须是]，不能有任何其他文字：
+  [{"question":"题目文字","explanation":"简短解题思路2-3句"}]`;
+
+  try{
+    const dsKey=apiKeys['deepseek']||cfg.key;
+    let picked=null;
+    for(let attempt=0;attempt<3;attempt++){
+      const r=await fetch('https://api.deepseek.com/v1/chat/completions',{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${dsKey}`},body:JSON.stringify({model:'deepseek-chat',max_tokens:1200,messages:[{role:'user',content:prompt+(attempt?`\n\n这是第${attempt+1}次重出，务必和上面那些题明显不同。`:'' )}]})});
+      if(!r.ok){const e=await r.json();throw new Error(e.error?.message||`HTTP ${r.status}`);}
+      const txt=(await r.json()).choices[0].message.content||'';
+      const as=txt.indexOf('['),ae=txt.lastIndexOf(']');
+      if(as===-1||ae===-1) throw new Error('AI没有返回题目，请重试');
+      const qs=JSON.parse(txt.slice(as,ae+1));
+      if(!Array.isArray(qs)||qs.length===0) throw new Error('题目格式错误');
+      const candidate=qs[0];
+      if(candidate?.question&&!isQuestionTooSimilar(candidate.question,[qText,...challengeHistory])){
+        picked=candidate;
+        break;
+      }
+    }
+    if(!picked) throw new Error('这次出的题太像上一题了，请再试一次');
+    rememberChallengeQuestion(picked.question);
+    challengeQuestions=[{...picked,answer:''}];
+    renderChallengeQuestions();
+  }catch(e){
+    document.getElementById('chalLoading').innerHTML=`<div style="text-align:center;padding:40px 0"><div style="font-size:32px;margin-bottom:12px">😓</div><div style="color:var(--coral-d);font-size:14px;margin-bottom:16px">⚠ ${e.message}</div><button onclick="generateChallengeQuestions()" style="padding:10px 24px;border-radius:99px;background:var(--coral);color:#fff;border:none;font-size:13px;cursor:pointer;font-weight:700;font-family:'Noto Sans SC',sans-serif">重新生成</button></div>`;
+  }
+}
+
+function renderChallengeQuestions(){
+  document.getElementById('chalLoading').style.display='none';
+  document.getElementById('chalContent').style.display='block';
+  document.getElementById('chalSubmitBtn').style.display='block';
+  document.getElementById('chalSubmitBtn').disabled=false;
+  document.getElementById('chalSubmitBtn').textContent='提交答案 →';
+  document.getElementById('chalHeader').innerHTML=`<div style="display:inline-flex;align-items:center;gap:6px;padding:6px 14px;border-radius:99px;background:var(--sun-bg);border:1.5px solid var(--sun-border);font-size:12px;font-weight:700;color:#7a5c00">⚔️ 变形怪兽挑战</div><div style="font-size:20px;font-weight:700;color:var(--text);margin-top:10px;font-family:'Noto Serif SC',serif">来和“${getMonsterName()}”过一招</div><div style="margin-top:8px"><button onclick="openMonsterModal(true)" style="padding:6px 12px;border-radius:99px;background:transparent;border:1.5px solid var(--border2);color:var(--text2);font-size:12px;cursor:pointer;font-family:'Noto Sans SC',sans-serif">给怪兽换个名字</button></div>`;
+  document.getElementById('chalQList').innerHTML=challengeQuestions.map((q,i)=>`
+    <div style="background:#fff;border:2px solid var(--border);border-radius:18px;padding:18px;margin-bottom:14px;box-shadow:var(--shadow-sm)">
+      <div style="display:flex;align-items:flex-start;gap:8px;margin-bottom:12px">
+        <div style="width:26px;height:26px;border-radius:9px;background:var(--sun);color:#fff;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;flex-shrink:0">${i+1}</div>
+        <div style="font-size:14px;color:var(--text);line-height:1.65">${q.question}</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px">
+        <span style="font-size:12px;color:var(--text3);white-space:nowrap">我的答案：</span>
+        <input id="cq_${i}" type="text" placeholder="写出答案…"
+          style="flex:1;padding:10px 13px;border-radius:10px;border:1.5px solid var(--border);background:var(--bg);color:var(--text);font-size:14px;outline:none"
+          oninput="challengeQuestions[${i}].answer=this.value"
+          onfocus="this.style.borderColor='var(--sun)'"
+          onblur="this.style.borderColor='var(--border)'">
+      </div>
+    </div>`).join('');
+}
+
+function extractJsonBlock(raw){
+  if(!raw) return null;
+  const objStart=raw.indexOf('{'), objEnd=raw.lastIndexOf('}');
+  if(objStart!==-1&&objEnd!==-1&&objEnd>objStart) return raw.slice(objStart,objEnd+1);
+  const arrStart=raw.indexOf('['), arrEnd=raw.lastIndexOf(']');
+  if(arrStart!==-1&&arrEnd!==-1&&arrEnd>arrStart) return raw.slice(arrStart,arrEnd+1);
+  return null;
+}
+function humanizeWeakName(name){
+  const raw=String(name||'').trim();
+  if(!raw) return '';
+  const map=[
+    [/步骤规划|步骤顺序意识|步骤顺序|step_order/i,'先做哪一步'],
+    [/算式表达|equation_expression/i,'算式怎么写'],
+    [/表述精确性|verbal_expression/i,'题意说清楚'],
+    [/细节验证与时间线梳理|条件识别|condition_identification/i,'条件别漏看'],
+    [/goal_identification|要求什么/i,'题目到底问什么'],
+    [/审题|读题/i,'题目别看漏'],
+    [/验算/i,'最后检查一下'],
+    [/应用题喷火龙|变式题\d+/i,raw]
+  ];
+  for(const [pattern,label] of map){
+    if(pattern.test(raw)) return label;
+  }
+  return raw.length>10?raw.slice(0,10):raw;
+}
+function humanizeWeakPoint(point){
+  if(!point) return {name:'',desc:''};
+  const name=humanizeWeakName(point.name||'');
+  const descMap=[
+    [/先做哪一步/,'容易绕晕在先算什么、后算什么'],
+    [/算式怎么写/,'脑子里会想，但写出来时容易乱'],
+    [/题意说清楚/,'知道一点点，但还没把思路说完整'],
+    [/条件别漏看/,'题目里的条件容易漏掉一个'],
+    [/题目到底问什么/,'有时会急着算，忘了先看题目要什么'],
+    [/题目别看漏/,'读题时容易跳过关键信息'],
+    [/最后检查一下/,'做完后如果不回头看，就容易丢分']
+  ];
+  let desc=String(point.desc||'').trim();
+  for(const [pattern,text] of descMap){
+    if(pattern.test(name)){desc=text;break;}
+  }
+  if(!desc) desc='这里再挖一挖，会更稳。';
+  return {name,desc};
+}
+function normalizeAnswerText(text){
+  return String(text||'')
+    .trim()
+    .replace(/[，,]/g,'')
+    .replace(/[。．\.]$/g,'')
+    .replace(/\s+/g,'')
+    .replace(/％/g,'%')
+    .replace(/：/g,':')
+    .replace(/^答案[:：]?/,'')
+    .replace(/^x=/i,'')
+    .replace(/^=/,'');
+}
+function parseNumericAnswer(text){
+  const clean=normalizeAnswerText(text);
+  if(!clean) return null;
+  if(/^[-+]?\d+(\.\d+)?%$/.test(clean)) return Number(clean.slice(0,-1))/100;
+  if(/^[-+]?\d+\/\d+$/.test(clean)){
+    const [a,b]=clean.split('/').map(Number);
+    if(b===0) return null;
+    return a/b;
+  }
+  if(/^[-+]?\d+(\.\d+)?$/.test(clean)) return Number(clean);
+  return null;
+}
+function answersEquivalent(userAnswer, correctAnswer, acceptedAnswers=[]){
+  const user=normalizeAnswerText(userAnswer);
+  const candidates=[correctAnswer,...(acceptedAnswers||[])].map(normalizeAnswerText).filter(Boolean);
+  if(!user||!candidates.length) return false;
+  if(candidates.includes(user)) return true;
+
+  const userNum=parseNumericAnswer(user);
+  if(userNum===null) return false;
+  return candidates.some(candidate=>{
+    const candidateNum=parseNumericAnswer(candidate);
+    return candidateNum!==null && Math.abs(candidateNum-userNum)<=1e-9;
+  });
+}
+async function solveChallengeQuestion(question){
+  const prompt=`你是严谨的小学数学判题助手。请独立重新解题，不要参考任何旧答案，也不要偷懒估算。
+
+题目：${question}
+年级：${grade}
+
+请先自己算清楚，再严格只输出一个JSON对象，第一个字符是{，最后一个字符是}：
+{"correct_answer":"最终答案","accepted_answers":["可接受的等价答案1","可接受的等价答案2"],"short_explanation":"用2-3句说明关键思路，适合小学生理解"}`;
+  const raw=await mathEngineCall(prompt);
+  const block=extractJsonBlock(raw);
+  if(!block) throw new Error('验算结果格式不对');
+  const parsed=JSON.parse(block);
+  return {
+    correct_answer:String(parsed.correct_answer||'').trim(),
+    accepted_answers:Array.isArray(parsed.accepted_answers)?parsed.accepted_answers.map(v=>String(v).trim()).filter(Boolean):[],
+    short_explanation:String(parsed.short_explanation||'').trim()
+  };
+}
+function buildDeterministicFeedback(question, userAnswer, solved){
+  const correct=answersEquivalent(userAnswer, solved.correct_answer, solved.accepted_answers);
+  if(correct){
+    return {
+      correct:true,
+      correct_answer:solved.correct_answer,
+      feedback:`答对啦！这块金矿被你挖出来了。${solved.short_explanation?`关键思路是：${solved.short_explanation}`:''}`
+    };
+  }
+  return {
+    correct:false,
+    correct_answer:solved.correct_answer,
+    feedback:`差一点就挖到了。${solved.short_explanation?`关键思路是：${solved.short_explanation}`:''}`
+  };
+}
+
+async function submitChallenge(){
+  const unanswered=challengeQuestions.findIndex(q=>!q.answer.trim());
+  if(unanswered!==-1){document.getElementById(`cq_${unanswered}`).focus();document.getElementById(`cq_${unanswered}`).style.borderColor='var(--coral)';return;}
+  document.getElementById('chalSubmitBtn').disabled=true;
+  document.getElementById('chalSubmitBtn').textContent='金矿老师正在认真验算…';
+  try{
+    const evals=[];
+    for(const q of challengeQuestions){
+      const solved=await solveChallengeQuestion(q.question);
+      if(!solved.correct_answer) throw new Error('验算失败，请重试');
+      evals.push(buildDeterministicFeedback(q.question,q.answer,solved));
+    }
+    renderChallengeResult(evals);
+  }catch(e){document.getElementById('chalSubmitBtn').disabled=false;document.getElementById('chalSubmitBtn').textContent='提交答案 →';alert('批改出错：'+e.message);}
+}
+
+function renderChallengeResult(evals){
+  document.getElementById('chalContent').style.display='none';
+  document.getElementById('chalSubmitBtn').disabled=false;
+  document.getElementById('chalSubmitBtn').textContent='提交答案 →';
+  const allCorrect=evals.every(e=>e.correct);
+  const correctCount=evals.filter(e=>e.correct).length;
+  const total=evals.length;
+  const isVerRound=round>1;
+  if(isVerRound) saveRound(buildVerificationResult(evals));
+  const addedMineCount=!isVerRound&&!allCorrect?saveChallengeMistakes(evals):0;
+
+  const trophy=allCorrect?'🏆':correctCount>0?'⭐':'💪';
+  const title=allCorrect?'挖到金子啦！':correctCount>0?'差一点就挖到了！':'这块矿石有点硬';
+  const subtitle=allCorrect?'这道变式题也被你挖出来了，说明你真的会了！':correctCount>0?'再看一眼解析，回去补一下思路，马上就能挖出来。':'没关系，先回去补一补装备，再来挖一次。';
+
+  const qHtml=challengeQuestions.map((q,i)=>{
+    const ev=evals[i]||{correct:false,feedback:'批改出错'};
+    const bc=ev.correct?'#9be8ce':'#ffc4b8';
+    const dc=ev.correct?'#2ec99a':'#ff6b4a';
+    const fbg=ev.correct?'#edfbf5':'#fff5f3';
+    const ac=ev.correct?'#1a8f6a':'#e5502f';
+    return '<div style="background:#fff;border:2px solid '+bc+';border-radius:18px;padding:18px;margin-bottom:12px;box-shadow:var(--shadow-sm)"><div style="display:flex;align-items:flex-start;gap:8px;margin-bottom:10px"><div style="width:26px;height:26px;border-radius:9px;background:'+dc+';color:#fff;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0">'+(ev.correct?'✓':'✗')+'</div><div style="font-size:13px;color:var(--text2);line-height:1.6">'+q.question+'</div></div><div style="background:'+fbg+';border-radius:10px;padding:10px 13px;font-size:13px;color:var(--text);line-height:1.7"><span style="font-weight:700;color:'+ac+'">你的答案：'+q.answer+'</span><br>'+(ev.correct?'':('正确答案：'+(ev.correct_answer||'请再检查题目')+'<br>'))+ev.feedback+'</div></div>';
+  }).join('');
+
+  // restudy button if verification round and got wrong
+  const restudyHtml=(isVerRound&&!allCorrect)
+    ?`<div style="background:var(--coral-bg);border:1.5px solid var(--coral-border);border-radius:14px;padding:14px 16px;margin-bottom:10px;text-align:center"><div style="font-size:14px;font-weight:700;color:var(--coral-d);margin-bottom:4px">这块矿石还差一点点，我们回去再挖一下</div><button onclick="restartFullReview()" style="width:100%;padding:12px;border-radius:var(--r);background:var(--coral);color:#fff;font-size:14px;font-weight:700;border:none;cursor:pointer;font-family:'Noto Sans SC',sans-serif;margin-top:8px;box-shadow:0 4px 12px rgba(255,107,74,0.3)">🔍 回去继续挖这道题</button></div>`
+    :'';
+  const autoSavedMineHtml=(!isVerRound&&addedMineCount>0)
+    ?`<div style="background:var(--mint-bg);border:1.5px solid var(--mint-border);border-radius:14px;padding:14px 16px;margin-bottom:10px;text-align:center"><div style="font-size:14px;font-weight:700;color:#1a8f6a;margin-bottom:4px">这块新金矿已经帮你存好了</div><div style="font-size:12px;color:var(--text2);line-height:1.65">刚才没完全挖出来的变式题，已经放进“还在挖的金矿”里，之后可以继续消化。</div></div>`
+    :'';
+
+  const html='<div style="text-align:center;padding:20px 0 16px"><div style="font-size:48px;margin-bottom:10px">'+trophy+'</div><div style="font-family:\'Noto Serif SC\',serif;font-size:20px;font-weight:700;color:var(--text);margin-bottom:6px">'+title+'</div><div style="font-size:13px;color:var(--text2);margin-bottom:20px">'+subtitle+'</div></div>'
+    +qHtml+autoSavedMineHtml+restudyHtml
+    +'<div style="display:flex;gap:8px;margin-top:8px">'
+    +'<button onclick="startChallenge()" style="flex:1;padding:12px;border-radius:var(--r);background:linear-gradient(135deg,var(--sun),#e5952a);color:#fff;font-size:13px;font-weight:700;border:none;cursor:pointer;font-family:\'Noto Sans SC\',sans-serif">🔄 再来一组</button>'
+    +'<button onclick="resetAndGoHome()" style="flex:1;padding:12px;border-radius:var(--r);background:transparent;border:1.5px solid var(--border2);color:var(--text2);font-size:13px;cursor:pointer;font-family:\'Noto Sans SC\',sans-serif">复盘新题</button>'
+    +'</div>';
+
+  document.getElementById('chalResult').innerHTML=html;
+  document.getElementById('chalResult').style.display='block';
+}
+
+// ═══════════════════════════════════════════════
+//  VERIFICATION ROUND (R2/R3 — direct quiz)
+// ═══════════════════════════════════════════════
+function startFromArchive(recId,rnd){
+  const rec=loadArc().find(r=>r.id===recId);
+  if(!rec) return;
+  activeId=recId; round=rnd;
+  grade=rec.grade; qText=rec.question; wAns=rec.wrongAnswer||'';
+  if(rnd===1){
+    document.getElementById('qInput').value=qText;
+    document.getElementById('wAns').value=wAns;
+    document.getElementById('startBtn').disabled=false;
+    goTo(1);
+  } else {
+    startVerificationRound(rec,rnd);
+  }
+}
+
+async function startVerificationRound(rec,rnd){
+  round=rnd; grade=rec.grade; qText=rec.question; wAns=rec.wrongAnswer||'';
+  goTo(4);
+  const load=document.getElementById('chalLoading');
+  const weakPoints=(rec.rounds[0]?.result?.weak_points||[]).map(w=>humanizeWeakName(w.name)).join('、');
+  load.style.display='block';
+      load.innerHTML=`<div style="font-size:40px;margin-bottom:12px;animation:bounce 1s infinite alternate">${rnd===2?'🔁':'🏁'}</div><div style="font-size:16px;font-weight:700;color:var(--text);margin-bottom:6px">${rnd===2?'第二轮 · 一周后验证':'第三轮 · 考前冲刺'}</div><div style="font-size:13px;color:var(--text2)">金矿老师正在请 ${getMonsterName()} 出题…</div>`;
+  document.getElementById('chalContent').style.display='none';
+  document.getElementById('chalResult').style.display='none';
+  challengeQuestions=[];
+
+  const dsKey=apiKeys['deepseek']||cfg.key;
+  const prompt=`你是小学数学老师，为孩子出复习题验证掌握情况。
+原题：${rec.question}
+年级：${rec.grade}
+${weakPoints?'上次薄弱点：'+weakPoints:''}
+本次是${rnd===2?'一周后第二轮复习，重点验证薄弱点是否改善':'考前冲刺，验证是否掌握，可略提高难度'}
+
+生成1道题让孩子直接解答，改变数字和场景，考查同一知识点。
+你必须直接输出JSON数组，第一个字符[，最后一个字符]，无其他文字：
+[{"question":"题目文字","explanation":"解题思路2-3句"}]`;
+
+  try{
+    const r=await fetch('https://api.deepseek.com/v1/chat/completions',{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${dsKey}`},body:JSON.stringify({model:'deepseek-chat',max_tokens:1200,messages:[{role:'user',content:prompt}]})});
+    if(!r.ok){const e=await r.json();throw new Error(e.error?.message||`HTTP ${r.status}`);}
+    const txt=(await r.json()).choices[0].message.content||'';
+    const as=txt.indexOf('['),ae=txt.lastIndexOf(']');
+    if(as===-1||ae===-1) throw new Error('生成失败，请重试');
+    const qs=JSON.parse(txt.slice(as,ae+1));
+    challengeQuestions=qs.map(q=>({...q,answer:''}));
+
+    load.style.display='none';
+    document.getElementById('chalContent').style.display='block';
+    document.getElementById('chalSubmitBtn').style.display='block';
+    document.getElementById('chalSubmitBtn').disabled=false;
+    document.getElementById('chalSubmitBtn').textContent='提交答案 →';
+    document.getElementById('chalHeader').innerHTML=`
+      <div style="display:inline-flex;align-items:center;gap:6px;padding:6px 14px;border-radius:99px;background:${rnd===2?'var(--mint-bg)':'var(--coral-bg)'};border:1.5px solid ${rnd===2?'var(--mint-border)':'var(--coral-border)'};font-size:12px;font-weight:700;color:${rnd===2?'#1a8f6a':'var(--coral-d)'}">${rnd===2?'🔁 第二轮 · 看看还记得吗？':'🏁 考前冲刺 · 这次能全对吗？'}</div>
+      <div style="font-size:20px;font-weight:700;color:var(--text);margin-top:10px;font-family:'Noto Serif SC',serif">来和“${getMonsterName()}”过一招</div>
+      ${weakPoints?`<div style="font-size:12px;color:var(--text3);margin-top:8px">上次薄弱点：${weakPoints}</div>`:''}`;
+    document.getElementById('chalQList').innerHTML=qs.map((q,i)=>`
+      <div style="background:#fff;border:2px solid var(--border);border-radius:18px;padding:18px;margin-bottom:14px;box-shadow:var(--shadow-sm)">
+        <div style="display:flex;align-items:flex-start;gap:8px;margin-bottom:12px">
+          <div style="width:26px;height:26px;border-radius:9px;background:var(--sun);color:#fff;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;flex-shrink:0">${i+1}</div>
+          <div style="font-size:14px;color:var(--text);line-height:1.65">${q.question}</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px">
+          <span style="font-size:12px;color:var(--text3);white-space:nowrap">我的答案：</span>
+          <input id="cq_${i}" type="text" placeholder="写出答案…"
+            style="flex:1;padding:10px 13px;border-radius:10px;border:1.5px solid var(--border);background:var(--bg);color:var(--text);font-size:14px;outline:none"
+            oninput="challengeQuestions[${i}].answer=this.value"
+            onfocus="this.style.borderColor='var(--sun)'"
+            onblur="this.style.borderColor='var(--border)'">
+        </div>
+      </div>`).join('');
+  }catch(e){
+    load.innerHTML=`<div style="text-align:center;padding:40px 0"><div style="font-size:32px;margin-bottom:12px">😓</div><div style="color:var(--coral-d);font-size:14px;margin-bottom:16px">⚠ ${e.message}</div><button onclick="startVerificationRound(loadArc().find(r=>r.id==='${rec.id}'),${rnd})" style="padding:10px 24px;border-radius:99px;background:var(--coral);color:#fff;border:none;font-size:13px;cursor:pointer;font-weight:700;font-family:'Noto Sans SC',sans-serif">重新生成</button></div>`;
+  }
+}
+
+function restartFullReview(){
+  const savedId=activeId,savedG=grade,savedQ=qText,savedW=wAns;
+  round=1; history=[]; stage=0; turns=0; passCount=0; stuckCount=0;
+  STAGES=getStages(savedG);
+  presolvedAnswer=''; preSolveConfident=false;
+  grade=savedG; qText=savedQ; wAns=savedW; activeId=savedId;
+  document.getElementById('qInput').value=qText;
+  document.getElementById('wAns').value=wAns;
+  document.getElementById('startBtn').disabled=false;
+  document.getElementById('qInput').disabled=false;
+  document.getElementById('formErr').style.display='none';
+  goTo(1);
+}
+
+function buildArchiveInsightReport(recs){
+  if(!recs.length) return null;
+  const weakMap={};
+  let pendingParent=0, completedVerify=0, dueVerify=0;
+  recs.forEach(rec=>{
+    if(rec.pendingParent) pendingParent++;
+    if(rec.rounds[1]?.date) completedVerify++;
+    if(rec.rounds[2]?.date) completedVerify++;
+    if(rec.rounds[1]&&!rec.rounds[1].date) dueVerify++;
+    if(rec.rounds[2]&&!rec.rounds[2].date&&rec.rounds[2].dueDate) dueVerify++;
+    (rec.rounds[0]?.result?.weak_points||[]).forEach(w=>{
+      const key=humanizeWeakName(w.name);
+      weakMap[key]=(weakMap[key]||0)+1;
+    });
+  });
+  const topWeak=Object.entries(weakMap).sort((a,b)=>b[1]-a[1]).slice(0,3);
+  if(!topWeak.length&&recs.length<3) return null;
+
+  const leadName=topWeak[0]?.[0]||'应用题复盘';
+  let profile='最近这段时间，孩子已经愿意进入错题复盘，说明不再那么抗拒面对错题。';
+  if(leadName.includes('步骤')||leadName.includes('顺序')){
+    profile='孩子常常不是不会，而是容易在“先做什么、后做什么”这里绕乱。思路方向大多是对的，但步骤一乱，就容易掉坑。';
+  } else if(leadName.includes('表达')||leadName.includes('算式')){
+    profile='孩子的思路常常已经有了，但容易卡在“怎么说清楚、怎么列出来”这一步。重点不是多刷题，而是把想法表达完整。';
+  } else if(leadName.includes('审题')||leadName.includes('条件')||leadName.includes('验算')){
+    profile='孩子最近更容易在读题和检查上丢分。不是算不动，而是容易漏条件、漏验证，导致本来会做的题也失分。';
+  }
+
+  const suggestions=[];
+  if(leadName.includes('步骤')||leadName.includes('顺序')) suggestions.push('这周先重点练“先求什么，再求什么”，每次做完让孩子口头说一遍顺序。');
+  if(leadName.includes('表达')||leadName.includes('算式')) suggestions.push('最近先别急着追求更快的方法，重点让孩子把算式和理由说完整。');
+  if(leadName.includes('审题')||leadName.includes('条件')||leadName.includes('验算')) suggestions.push('做题后多加 1 分钟检查：题目要什么、条件有没有都用上。');
+  if(pendingParent>0) suggestions.push(`有 ${pendingParent} 道题还需要家长一起挖，建议优先从最近那道卡住的题开始。`);
+  if(completedVerify===0) suggestions.push('先把已经复盘过的题做一轮短验证，比继续堆新错题更重要。');
+  if(!suggestions.length) suggestions.push('保持现在的节奏就很好，每次复盘后用 10 分钟让孩子再讲一遍思路。');
+
+  return {
+    title:'📋 这段时间挖出了什么',
+    summary:`最近一共整理了 ${recs.length} 道错题。现在最值得优先关注的是：${topWeak.map(([name,count])=>`${name}（${count}次）`).join('、')||'整体复盘节奏'}`,
+    profile,
+    blindspots:topWeak,
+    progress:`已经完成第一轮 ${recs.filter(r=>r.rounds[0]?.date).length} 道，二三轮一共完成 ${completedVerify} 次，现在还有 ${dueVerify} 个复习节点可以继续推进。`,
+    suggestions:suggestions.slice(0,3)
+  };
+}
+function showArchiveReport(){
+  archiveReportVisible=true;
+  renderArchive();
+}
+function isMasteredRecord(rec){
+  if(rec.pendingParent) return false;
+  if(!rec.rounds.every(r=>!!r.date)) return false;
+  const r2Weak=(rec.rounds[1]?.result?.weak_points||[]).length;
+  const r3Weak=(rec.rounds[2]?.result?.weak_points||[]).length;
+  return r2Weak===0 && r3Weak===0;
+}
+function isPriorityRecord(rec){
+  const t=today();
+  if(rec.pendingParent) return true;
+  return rec.rounds.some(r=>!r.date&&r.dueDate&&r.dueDate<=t);
+}
+function sortArchiveRecords(recs){
+  const t=today();
+  return [...recs].sort((a,b)=>{
+    const aDue=a.rounds.find(r=>!r.date&&r.dueDate)?.dueDate||'9999-99-99';
+    const bDue=b.rounds.find(r=>!r.date&&r.dueDate)?.dueDate||'9999-99-99';
+    if(aDue!==bDue) return aDue.localeCompare(bDue);
+    const aUrg=isPriorityRecord(a)?0:1;
+    const bUrg=isPriorityRecord(b)?0:1;
+    if(aUrg!==bUrg) return aUrg-bUrg;
+    return (b.rounds[0]?.date||'').localeCompare(a.rounds[0]?.date||'');
+  });
+}
+function toggleArchiveGroup(group){
+  archiveGroupExpanded[group]=!archiveGroupExpanded[group];
+  renderArchive();
+}
+function renderArchiveCards(targetId,recs,emptyTitle,emptySub,groupKey){
+  const el=document.getElementById(targetId);
+  if(!recs.length){
+    el.innerHTML=`<div class="arc-empty"><div class="arc-empty-icon">📭</div><div class="arc-empty-txt">${emptyTitle}</div><div class="arc-empty-sub">${emptySub}</div></div>`;
+    const toggle=groupKey?document.getElementById(groupKey+'Toggle'):null;
+    if(toggle) toggle.style.display='none';
+    return;
+  }
+  const sorted=sortArchiveRecords(recs);
+  const expanded=groupKey?archiveGroupExpanded[groupKey]:true;
+  const visible=expanded?sorted:sorted.slice(0,3);
+  const t=today();
+  el.innerHTML=visible.map(rec=>{
+    const wps=(rec.rounds[0]?.result?.weak_points||[]).map(w=>`<span class="atag">${humanizeWeakName(w.name)}</span>`).join('');
+    const pendingTag=rec.pendingParent?'<span class="atag pending">⏳ 待家长协助</span>':'';
+    const masteryTag=isMasteredRecord(rec)?'<span class="atag" style="background:var(--mint-bg);border-color:var(--mint-border);color:#1a8f6a">✅ 已挖出</span>':'';
+    const dots=rec.rounds.map((rnd,i)=>{
+      const cls=rnd.date?'done':rnd.dueDate&&rnd.dueDate<=t?'due':'pend';
+      return`<div class="rnd-dot ${cls}">${i+1}</div>`;
+    }).join('<div class="rnd-line"></div>');
+    return`<div class="arc-card" onclick="openDetail('${rec.id}')">
+      <div class="arc-card-top">
+        <div class="arc-q">${rec.question.length>55?rec.question.slice(0,55)+'…':rec.question}</div>
+        <div class="arc-meta"><span class="arc-grade">${rec.grade}</span><span class="arc-date">${rec.rounds[0]?.date||''}</span></div>
+      </div>
+      ${(wps||pendingTag||masteryTag)?`<div class="arc-tags">${masteryTag}${pendingTag}${wps}</div>`:''}
+      <div class="arc-rounds"><span class="arc-r-lbl">三轮进度</span>${dots}</div>
+      <button class="arc-del" onclick="event.stopPropagation();delRec('${rec.id}')">×</button>
+    </div>`;
+  }).join('');
+  if(groupKey){
+    const toggle=document.getElementById(groupKey+'Toggle');
+    if(toggle){
+      toggle.style.display=sorted.length>3?'inline-flex':'none';
+      toggle.textContent=expanded?'先收起':'展开看看全部';
+    }
+  }
+}
+function renderArchiveInsightReport(recs){
+  const el=document.getElementById('archiveReport');
+  const report=buildArchiveInsightReport(recs);
+  if(!report){
+    el.classList.add('hidden');
+    el.innerHTML='';
+    return;
+  }
+  el.classList.remove('hidden');
+  el.innerHTML=`
+    <div class="ar-title">${report.title}</div>
+    <div class="ar-sub">${report.summary}</div>
+    <div class="ar-grid">
+      <div class="ar-card">
+        <div class="ar-card-lbl">孩子最近更容易卡在哪里</div>
+        <div class="ar-line">${report.profile}</div>
+      </div>
+      <div class="ar-card">
+        <div class="ar-card-lbl">最近老是卡住的地方</div>
+        <div class="ar-list">
+          ${report.blindspots.map(([name,count])=>`<div class="ar-line">• ${name}：最近出现 ${count} 次</div>`).join('')}
+        </div>
+      </div>
+      <div class="ar-card">
+        <div class="ar-card-lbl">现在挖到哪一步了</div>
+        <div class="ar-line">${report.progress}</div>
+      </div>
+      <div class="ar-card">
+        <div class="ar-card-lbl">家长这周重点盯什么</div>
+        <div class="ar-list">
+          ${report.suggestions.map(item=>`<div class="ar-line">• ${item}</div>`).join('')}
+        </div>
+      </div>
+    </div>
+    <div class="ar-actions">
+      <button class="ar-ai-btn" id="archiveAiBtn" onclick="generateArchiveAiReport()">✨ 生成更详细的藏宝图</button>
+      <div class="ar-ai-status" id="archiveAiStatus">先看看这份人话版挖矿报告。想看更细的总结，再展开藏宝图。</div>
+    </div>
+    <div class="ar-ai-box" id="archiveAiBox" style="display:none"></div>`;
+
+  const cacheKey=getArchiveAiCacheKey(recs);
+  if(archiveAiReportCache.key===cacheKey&&archiveAiReportCache.data){
+    renderArchiveAiReportBox(archiveAiReportCache.data);
+  }
+}
+function getArchiveAiCacheKey(recs){
+  return recs.map(rec=>{
+    const weak=(rec.rounds[0]?.result?.weak_points||[]).map(w=>humanizeWeakName(w.name)).join(',');
+    return [rec.id,rec.pendingParent?'1':'0',weak,rec.rounds[1]?.date||'',rec.rounds[2]?.date||''].join('|');
+  }).join('||');
+}
+function renderArchiveAiReportBox(data){
+  const box=document.getElementById('archiveAiBox');
+  const status=document.getElementById('archiveAiStatus');
+  if(!box||!data) return;
+  box.style.display='block';
+  box.innerHTML=`
+    <div class="ar-card-lbl">更详细的藏宝图</div>
+    <div class="ar-line" style="margin-bottom:10px">${data.summary||''}</div>
+    <div class="ar-card-lbl">孩子现在的状态</div>
+    <div class="ar-line" style="margin-bottom:10px">${data.profile||''}</div>
+    <div class="ar-card-lbl">最近要重点挖开的地方</div>
+    <div class="ar-list" style="margin-bottom:10px">
+      ${(data.blindspots||[]).map(item=>`<div class="ar-line">• ${item}</div>`).join('')}
+    </div>
+    <div class="ar-card-lbl">家长接下来怎么带</div>
+    <div class="ar-list">
+      ${(data.parent_focus||[]).map(item=>`<div class="ar-line">• ${item}</div>`).join('')}
+    </div>`;
+  if(status) status.textContent='下面这份是金矿老师根据最近错题整理的详细藏宝图。';
+}
+async function generateArchiveAiReport(){
+  const recs=loadArc();
+  if(recs.length<3){
+    const status=document.getElementById('archiveAiStatus');
+    if(status) status.textContent='至少积累 3 道错题后，再展开藏宝图会更准。';
+    return;
+  }
+  const btn=document.getElementById('archiveAiBtn');
+  const status=document.getElementById('archiveAiStatus');
+  const cacheKey=getArchiveAiCacheKey(recs);
+  if(archiveAiReportCache.key===cacheKey&&archiveAiReportCache.data){
+    renderArchiveAiReportBox(archiveAiReportCache.data);
+    return;
+  }
+  if(btn){btn.disabled=true;btn.textContent='正在整理…';}
+  if(status) status.textContent='金矿老师正在顺着这些错题画藏宝图…';
+  try{
+    const payload=recs.slice(0,12).map(rec=>({
+      question:rec.question,
+      grade:rec.grade,
+      pending_parent:!!rec.pendingParent,
+      round1_weak_points:(rec.rounds[0]?.result?.weak_points||[]).map(w=>humanizeWeakName(w.name)),
+      round1_summary:rec.rounds[0]?.result?.summary||'',
+      round2_done:!!rec.rounds[1]?.date,
+      round3_done:!!rec.rounds[2]?.date
+    }));
+    const prompt=`你是小学数学学习顾问，要给家长写一份阶段性学习报告。请基于下面这些错题记录，输出一份简洁、具体、能直接行动的总结。
+
+要求：
+1. 语气是帮助家长抓重点，不要评判孩子
+2. 用家长和孩子都看得懂的人话，不要使用“盲区、步骤规划、表述精确性”这类书面词
+3. 重点找“最近老是卡住的地方”和“接下来一周该抓什么”
+4. 必须严格输出JSON对象，第一个字符是{，最后一个字符是}
+
+数据：
+${JSON.stringify({grade:loadSet().grade||grade,records:payload},null,2)}
+
+输出格式：
+{"summary":"一句话总结","profile":"孩子当前情况，2-3句","blindspots":["最近老卡住的地方1","最近老卡住的地方2","最近老卡住的地方3"],"parent_focus":["建议1","建议2","建议3"]}`;
+    const raw=await PROVIDERS['deepseek'].callJ(cfg.key,cfg.model,prompt);
+    const block=extractJsonBlock(raw);
+    if(!block) throw new Error('AI 报告格式不对');
+    const data=JSON.parse(block);
+    archiveAiReportCache={key:cacheKey,data};
+    renderArchiveAiReportBox(data);
+  }catch(e){
+      if(status) status.textContent='藏宝图整理失败了，请稍后再试。';
+  }finally{
+    if(btn){btn.disabled=false;btn.textContent='✨ 生成更详细的藏宝图';}
+  }
+}
+
+// ═══════════════════════════════════════════════
+//  ARCHIVE
+// ═══════════════════════════════════════════════
+function renderArchive(){
+  const s=loadSet();
+  document.getElementById('gradeDisplay').textContent=s.grade||'未设置';
+  if(s.midtermDate) document.getElementById('setMid').value=s.midtermDate;
+  if(s.finalDate)   document.getElementById('setFin').value=s.finalDate;
+  if(s.round2Days)  document.getElementById('setR2').value=s.round2Days;
+  refreshCd();
+  updateArcSettingsSummary();
+  toggleArcSettings(false);
+
+  const recs=loadArc();
+  const priorityRecs=recs.filter(rec=>!isMasteredRecord(rec)&&isPriorityRecord(rec));
+  const activeRecs=recs.filter(rec=>!isMasteredRecord(rec)&&!isPriorityRecord(rec));
+  const masteredRecs=recs.filter(rec=>isMasteredRecord(rec));
+  let weakMap={};
+  recs.forEach(rec=>{
+    (rec.rounds[0]?.result?.weak_points||[]).forEach(w=>{
+      const key=humanizeWeakName(w.name);
+      weakMap[key]=(weakMap[key]||0)+1;
+    });
+  });
+  document.getElementById('arcStats').innerHTML=`
+    <div class="astat"><div class="astat-n">${priorityRecs.length}</div><div class="astat-l">现在先挖</div></div>
+    <div class="astat"><div class="astat-n">${activeRecs.length}</div><div class="astat-l">还在慢慢挖</div></div>
+    <div class="astat"><div class="astat-n">${masteredRecs.length}</div><div class="astat-l">已经挖出</div></div>`;
+  document.getElementById('archiveReportLaunch').style.display=recs.length?'block':'none';
+  if(archiveReportVisible) renderArchiveInsightReport(recs);
+  else {
+    document.getElementById('archiveReport').classList.add('hidden');
+    document.getElementById('archiveReport').innerHTML='';
+  }
+  const sw=Object.entries(weakMap).sort((a,b)=>b[1]-a[1]);
+  document.getElementById('weakCloud').innerHTML=sw.length
+    ?sw.map(([n,c])=>`<div class="wctag">${n}<span class="wctag-n">${c}</span></div>`).join('')
+    :'<div style="color:#b8ad9e;font-size:13px">复盘后薄弱点会显示在这里</div>';
+  document.getElementById('prioritySecTitle').textContent=`现在先挖（${priorityRecs.length}）`;
+  document.getElementById('activeSecTitle').textContent=`还在慢慢挖（${activeRecs.length}）`;
+  document.getElementById('masteredSecTitle').textContent=`已经挖出的金矿（${masteredRecs.length}）`;
+  if(!recs.length){
+    document.getElementById('priorityArcList').innerHTML=`<div class="arc-empty"><div class="arc-empty-icon">📭</div><div class="arc-empty-txt">还没有复盘记录</div><div class="arc-empty-sub">输入第一道错题开始吧</div></div>`;
+    document.getElementById('activeArcList').innerHTML='';
+    document.getElementById('masteredArcList').innerHTML='';
+    ['priorityToggle','activeToggle','masteredToggle'].forEach(id=>{
+      const el=document.getElementById(id);
+      if(el) el.style.display='none';
+    });
+    return;
+  }
+  renderArchiveCards('priorityArcList',priorityRecs,'眼下没有着急要挖的金矿','先把当前节奏保持住，等到时间了再来复习。','priority');
+  renderArchiveCards('activeArcList',activeRecs,'目前没有还在慢慢挖的金矿','现在的重点题已经都被你拎出来了。','active');
+  renderArchiveCards('masteredArcList',masteredRecs,'还没有已经挖出的金矿','等三轮都走完、而且稳定掌握后，就会放到这里。','mastered');
+}
+function delRec(id){saveArc(loadArc().filter(r=>r.id!==id));renderArchive();}
+
+function saveArcSettings(){
+  const s=loadSet();
+  s.midtermDate=document.getElementById('setMid').value;
+  s.finalDate=document.getElementById('setFin').value;
+  s.round2Days=document.getElementById('setR2').value;
+  saveSet(s);
+  const nx=getNextExam();
+  const recs=loadArc();
+  let ch=false;
+  recs.forEach(r=>{
+    const baseDate=r.rounds[0]?.date;
+    if(baseDate&&!r.rounds[1].date){
+      r.rounds[1].dueDate=addDays(baseDate,parseInt(s.round2Days||7));
+      ch=true;
+    }
+    if(!r.rounds[2].date){
+      r.rounds[2].dueDate=nx?addDays(nx,-3):null;
+      ch=true;
+    }
+  });
+  if(ch) saveArc(recs);
+  refreshCd();
+  updateArcSettingsSummary();
+  toggleArcSettings(false);
+  const el=document.getElementById('arcSaved');el.style.display='block';setTimeout(()=>el.style.display='none',2500);
+}
+function refreshCd(){showCd('setMid','midCd');showCd('setFin','finCd');}
+function showCd(inputId,targetId){
+  const v=document.getElementById(inputId).value;const el=document.getElementById(targetId);
+  if(!v){el.innerHTML='';return;}
+  const d=daysDiff(today(),v);
+  if(d<0) el.innerHTML=`<span style="font-size:10px;color:var(--text3)">已过去 ${-d} 天</span>`;
+  else if(d<=7) el.innerHTML=`<span style="font-size:10px;color:var(--coral-d);font-weight:600">⚠ 还有 ${d} 天！</span>`;
+  else el.innerHTML=`<span style="font-size:10px;color:var(--mint)">还有 ${d} 天</span>`;
+}
+function updateArcSettingsSummary(){
+  const s=loadSet();
+  const bits=[
+    s.grade||'未设年级',
+    `第二轮 ${s.round2Days||7} 天后提醒`
+  ];
+  if(s.midtermDate) bits.push(`期中 ${s.midtermDate}`);
+  if(s.finalDate) bits.push(`期末 ${s.finalDate}`);
+  document.getElementById('arcSetSummary').textContent=bits.join(' · ');
+}
+function toggleArcSettings(force){
+  arcSettingsOpen=typeof force==='boolean'?force:!arcSettingsOpen;
+  const box=document.getElementById('arcSettings');
+  const btn=document.getElementById('arcSetToggle');
+  box.classList.toggle('open',arcSettingsOpen);
+  btn.textContent=arcSettingsOpen?'收起':'展开';
+}
+
+// grade change modal
+let pendingGrade='';
+function openGradeModal(){
+  pendingGrade=grade||loadSet().grade||'';
+  document.getElementById('gradeModalGrid').innerHTML=['一年级','二年级','三年级','四年级','五年级','六年级'].map(g=>`<button class="g-btn ${g===pendingGrade?'sel':''}" onclick="pickModalGrade(this,'${g}')">${g}</button>`).join('');
+  document.getElementById('gradeOv').classList.add('open');
+}
+function pickModalGrade(btn,g){
+  document.querySelectorAll('#gradeModalGrid .g-btn').forEach(b=>b.classList.remove('sel'));
+  btn.classList.add('sel');pendingGrade=g;
+}
+function saveGradeChange(){
+  if(!pendingGrade) return;
+  grade=pendingGrade;
+  const s=loadSet();s.grade=grade;saveSet(s);
+  document.getElementById('gradeDisplay').textContent=grade;
+  updateArcSettingsSummary();
+  document.getElementById('gradeOv').classList.remove('open');
+}
+function closeGradeModal(e){if(!e||e.target===document.getElementById('gradeOv'))document.getElementById('gradeOv').classList.remove('open');}
+
+// detail modal
+function openDetail(id){
+  const rec=loadArc().find(r=>r.id===id);if(!rec)return;
+  document.getElementById('modalTtl').textContent=rec.question;
+  const rl=['第一轮 · 当天','第二轮 · 一周后','第三轮 · 考前'];
+  const rc=['r1','r2','r3'];
+  let html=`<div class="modal-sec"><div class="modal-sec-lbl">基本信息</div><div style="font-size:13px;color:#7a6f60">${rec.grade} · ${rec.rounds[0]?.date||'—'}</div></div>`;
+  rec.rounds.forEach((rnd,i)=>{
+    const done=!!rnd.date;const due=rnd.dueDate;
+    html+=`<div class="modal-sec"><div class="modal-sec-lbl"><span class="chat-round-pill ${rc[i]}" style="font-size:10px;padding:2px 9px">${rl[i]}</span>${done?`<span style="color:var(--mint);font-size:11px;font-weight:600">✓ ${rnd.date}</span>`:due?`<span style="color:var(--text3);font-size:11px">${due<=today()?'⚠ 已到期':'计划 '+due}</span>`:''}</div>`;
+    if(done&&rnd.result){
+      const r=rnd.result;
+      if(r.weak_points?.length) html+=`<div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:7px">${r.weak_points.map(w=>`<span class="atag">${humanizeWeakName(w.name)}</span>`).join('')}</div>`;
+      if(r.parent_advice) html+=`<div style="font-size:12px;color:#7a6f60;font-style:italic">"${r.parent_advice}"</div>`;
+    } else if(done&&!rnd.result){
+      html+=`<div style="font-size:12px;color:var(--text3)">报告正在整理中…</div>`;
+    } else if(!done&&due&&due<=today()){
+      const lbl=i+1===2?'现在复习':i+1===3?'考前冲刺':'开始复盘';
+      html+=`<button class="due-go" style="font-size:12px;padding:7px 16px" onclick="closeModal();startFromArchive('${rec.id}',${i+1})">${lbl} →</button>`;
+    }
+    html+=`</div>`;
+  });
+  document.getElementById('modalBody').innerHTML=html;
+  document.getElementById('modalOv').classList.add('open');
+}
+function openQuestionModal(){
+  if(!qText) return;
+  document.getElementById('modalTtl').textContent='这道题';
+  document.getElementById('modalBody').innerHTML=`
+    <div class="modal-sec">
+      <div class="modal-sec-lbl">题目</div>
+      <div style="font-size:15px;color:var(--text);line-height:1.8">${qText.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br>')}</div>
+    </div>
+    ${wAns?`<div class="modal-sec">
+      <div class="modal-sec-lbl">孩子原答案</div>
+      <div style="font-size:14px;color:var(--text2);line-height:1.8">${wAns.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br>')}</div>
+    </div>`:''}
+    <div class="modal-sec">
+      <div class="modal-sec-lbl">小提示</div>
+      <div style="font-size:13px;color:var(--text3);line-height:1.7">看完直接关掉就能继续回答，不用把聊天区拉回最上面。</div>
+    </div>`;
+  document.getElementById('modalOv').classList.add('open');
+}
+function closeModal(e){if(!e||e.target===document.getElementById('modalOv'))document.getElementById('modalOv').classList.remove('open');}
+
+// ═══════════════════════════════════════════════
+//  EXPORT / IMPORT / CLEAR
+// ═══════════════════════════════════════════════
+function doExport(){
+  const recs=loadArc();if(!recs.length){alert('还没有记录');return;}
+  const blob=new Blob([JSON.stringify({version:7,date:new Date().toISOString(),settings:loadSet(),records:recs},null,2)],{type:'application/json'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`挖金矿_错题档案_${today()}.json`;a.click();URL.revokeObjectURL(a.href);
+}
+function doImport(e){
+  const f=e.target.files[0];if(!f)return;
+  const reader=new FileReader();
+  reader.onload=ev=>{
+    try{
+      const d=JSON.parse(ev.target.result);
+      const inc=d.records||d;if(!Array.isArray(inc))throw new Error('格式不对');
+      const ex=loadArc();const ids=new Set(ex.map(r=>r.id));let added=0;
+      const merged=[...ex];inc.forEach(r=>{if(!ids.has(r.id)){merged.push(r);added++;}});
+      merged.sort((a,b)=>parseInt(b.id)-parseInt(a.id));
+      saveArc(merged);renderArchive();alert(`导入完成，新增 ${added} 条。`);
+    }catch(err){alert('导入失败：'+err.message);}
+  };
+  reader.readAsText(f);e.target.value='';
+}
+function doClear(){
+  if(!loadArc().length){alert('档案已是空的');return;}
+  if(confirm('确定清空全部档案？建议先导出备份。')){saveArc([]);renderArchive();}
+}
+
+// ═══════════════════════════════════════════════
+//  CHAT HELPERS
+// ═══════════════════════════════════════════════
+function addMsg(role,text){
+  const box=document.getElementById('chatBox');
+  const now=new Date().toLocaleTimeString('zh-CN',{hour:'2-digit',minute:'2-digit'});
+  const el=document.createElement('div');el.className=`msg ${role}`;
+  const html=text.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>').replace(/\n/g,'<br>');
+  el.innerHTML=`<div class="msg-av">${role==='ai'?'⛏️':'👦'}</div><div><div class="msg-bub">${html}</div><div class="msg-time">${now}</div></div>`;
+  box.appendChild(el);box.scrollTop=box.scrollHeight;
+}
+function showTyping(){
+  const el=document.createElement('div');el.className='msg ai';el.id='typing';
+  el.innerHTML=`<div class="msg-av">⛏️</div><div><div class="msg-bub" style="padding:12px 16px"><div class="typing-dots"><span></span><span></span><span></span></div></div></div>`;
+  document.getElementById('chatBox').appendChild(el);document.getElementById('chatBox').scrollTop=99999;
+}
+function removeTyping(){const el=document.getElementById('typing');if(el)el.remove();}
+function setChat(disabled){
+  document.getElementById('chatInput').disabled=disabled;
+  document.getElementById('sendBtn').disabled=disabled;
+  document.getElementById('peekBtn').disabled=disabled;
+  document.getElementById('peekBtn').style.opacity=disabled?'.55':'1';
+  document.getElementById('voiceBtn').disabled=disabled;
+  document.getElementById('voiceBtn').style.opacity=disabled?'.55':'1';
+  document.getElementById('voiceBtn').style.pointerEvents=disabled?'none':'auto';
+}
+function updateKeyboardInset(){
+  const vv=window.visualViewport;
+  let offset=0;
+  if(vv){
+    offset=Math.max(0,window.innerHeight-vv.height-vv.offsetTop);
+  }
+  document.documentElement.style.setProperty('--kb-offset',`${Math.max(0,offset)}px`);
+}
+function keepComposerVisible(){
+  const box=document.getElementById('chatBox');
+  if(box) box.scrollTop=box.scrollHeight;
+}
+function showChatErr(msg){
+  removeTyping();
+  document.getElementById('chatErrArea').innerHTML=`<div class="chat-err">⚠ ${msg}</div>`;
+  setTimeout(()=>document.getElementById('chatErrArea').innerHTML='',7000);
+  setChat(false);
+}
+function renderChatProgress(){
+  document.getElementById('chatProg').innerHTML=STAGES.map((s,i)=>{
+    const cls=i<stage?'done':i===stage?'cur':'';
+    return`<div class="cp-dot ${cls}" title="${s}"></div>`;
+  }).join('');
+  const hintEl=document.getElementById('chatHint');
+  if(hintEl&&stage<STAGES.length) hintEl.innerHTML=`💡 第${stage+1}步：<strong>${STAGES[stage]}</strong> · 按住 🎤 说话`;
+}
+function showPassEffect(){
+  const box=document.getElementById('chatBox');
+  const el=document.createElement('div');
+  el.className='pass-effect';
+  el.innerHTML=`<span>⭐</span><span style="font-size:13px;font-weight:700;color:var(--mint)">答对啦！继续加油！</span>`;
+  box.appendChild(el);box.scrollTop=box.scrollHeight;
+  setTimeout(()=>el.remove(),2200);
+  document.querySelectorAll('.cp-dot.done').forEach(d=>{
+    d.style.transform='scale(1.6)';d.style.transition='transform .2s';
+    setTimeout(()=>{d.style.transform='scale(1)';},300);
+  });
+}
+
+// ═══════════════════════════════════════════════
+//  RESET
+// ═══════════════════════════════════════════════
+function resetReview(){
+  history=[];stage=0;turns=0;qText='';wAns='';round=1;activeId=null;
+  passCount=0;stuckCount=0;STAGES=getStages(grade);
+  presolvedAnswer='';preSolveConfident=false;
+  document.getElementById('qInput').value='';
+  document.getElementById('wAns').value='';
+  document.getElementById('qInput').disabled=false;
+  document.getElementById('startBtn').disabled=false;
+  document.getElementById('formErr').style.display='none';
+  document.getElementById('chatEndBtn').disabled=true;
+}
+function resetAndGoHome(){resetReview();goTo(1);}
+
+// ═══════════════════════════════════════════════
+//  STREAK UI
+// ═══════════════════════════════════════════════
+function renderStreak(){
+  const s=loadStreak();
+  const bar=document.getElementById('streakBar');
+  if(!bar) return;
+  if(s.days===0){bar.style.display='none';return;}
+  bar.style.display='block';
+
+  // fire emoji intensity by streak length
+  const fire = s.days>=30?'🔥🔥🔥':s.days>=14?'🔥🔥':'🔥';
+  document.getElementById('streakFire').textContent=fire;
+  document.getElementById('streakDaysText').textContent=`已连续挖矿 ${s.days} 天`;
+  document.getElementById('streakMonthText').textContent=`本月活跃 ${s.monthDays} 天`;
+
+  const ticketEl=document.getElementById('streakTicket');
+  if(s.restTickets>0){
+    ticketEl.style.display='flex';
+    document.getElementById('streakTicketCount').textContent=`×${s.restTickets}`;
+  } else {
+    ticketEl.style.display='none';
+  }
+}
+
+// ── TICKET UNLOCK CELEBRATION ──
+function showTicketUnlock(days){
+  const el=document.createElement('div');
+  el.id='ticketUnlockOverlay';
+  el.style.cssText='position:fixed;inset:0;z-index:9999;background:rgba(45,36,23,0.6);display:flex;align-items:center;justify-content:center;padding:20px;animation:fadeIn .3s ease';
+  el.innerHTML=`
+    <div style="background:#fff;border-radius:24px;padding:32px 28px;max-width:340px;width:100%;text-align:center;box-shadow:0 16px 48px rgba(0,0,0,0.2);animation:bounceIn .5s ease">
+      <div style="font-size:52px;margin-bottom:12px;animation:wiggle 1s ease infinite">🎟️</div>
+      <div style="font-family:'Noto Serif SC',serif;font-size:20px;font-weight:700;color:#2d2417;margin-bottom:8px">休息券解锁！</div>
+      <div style="font-size:14px;color:#7a6f60;line-height:1.75;margin-bottom:6px">你已经连续挖矿 <strong>${days} 天</strong>！<br>获得一张休息券，偶尔休息一天也没关系🌙</div>
+      <div style="font-size:12px;color:#b8ad9e;margin-bottom:20px">休息券会在你中断一天时自动使用</div>
+      <button onclick="document.getElementById('ticketUnlockOverlay').remove();renderStreak()"
+        style="width:100%;padding:13px;border-radius:18px;background:linear-gradient(135deg,#ffb930,#e5952a);color:#fff;font-size:15px;font-weight:700;border:none;cursor:pointer;font-family:'Noto Sans SC',sans-serif;box-shadow:0 4px 14px rgba(255,185,48,0.4)">
+        太棒了！继续加油 💪
+      </button>
+    </div>`;
+  document.body.appendChild(el);
+}
+
+// ═══════════════════════════════════════════════
+//  CELEBRATION OVERLAY (post-review)
+// ═══════════════════════════════════════════════
+function showCelebration(type, streakResult){
+  // type: 'A' = full pass, 'B' = partial, 'C' = stuck
+  if(type==='C') return; // no celebration for stuck
+
+  const el=document.createElement('div');
+  el.id='celebOverlay';
+  el.style.cssText='position:fixed;inset:0;z-index:8888;pointer-events:none;overflow:hidden;';
+
+  if(type==='A'){
+    // Full celebration: gold particles + big message
+    el.innerHTML=`
+      <div id="celebMsg" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;pointer-events:none;animation:celebIn .5s ease">
+        <div style="font-size:64px;margin-bottom:8px">⛏️✨</div>
+        <div style="font-family:'Noto Serif SC',serif;font-size:24px;font-weight:700;color:#2d2417;text-shadow:0 2px 8px rgba(255,185,48,0.4)">${getPersonalPraise()}</div>
+      </div>
+      <canvas id="particleCanvas" style="position:absolute;inset:0;width:100%;height:100%"></canvas>`;
+    document.body.appendChild(el);
+    runParticles();
+    setTimeout(()=>{
+      const overlay=document.getElementById('celebOverlay');
+      if(overlay){overlay.style.animation='fadeOut .5s ease forwards';setTimeout(()=>overlay.remove(),500);}
+    },2800);
+  } else {
+    // Light celebration for B
+    el.innerHTML=`
+      <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;animation:celebIn .4s ease">
+        <div style="font-size:48px;margin-bottom:6px">⭐</div>
+        <div style="font-family:'Noto Serif SC',serif;font-size:18px;font-weight:700;color:#2d2417">完成了，继续加油！</div>
+      </div>`;
+    document.body.appendChild(el);
+    setTimeout(()=>{
+      const overlay=document.getElementById('celebOverlay');
+      if(overlay){overlay.style.animation='fadeOut .4s ease forwards';setTimeout(()=>overlay.remove(),400);}
+    },1800);
+  }
+
+  // After celebration, check for ticket unlock
+  if(streakResult && streakResult.ticketUnlocked){
+    const delay=type==='A'?3200:2200;
+    setTimeout(()=>showTicketUnlock(streakResult.streak.days), delay);
+  }
+}
+
+function getPersonalPraise(){
+  const praises=[
+    '这块金矿被你挖出来了！💛',
+    '太厉害了，彻底搞懂了！🏆',
+    '金矿老师为你骄傲！⛏️',
+    '这道题再也难不倒你了！💪',
+    '脑子转得飞快，完全搞定！✨',
+  ];
+  return praises[Math.floor(Math.random()*praises.length)];
+}
+
+function runParticles(){
+  const canvas=document.getElementById('particleCanvas');
+  if(!canvas) return;
+  canvas.width=window.innerWidth; canvas.height=window.innerHeight;
+  const ctx=canvas.getContext('2d');
+  const particles=Array.from({length:60},()=>({
+    x:Math.random()*canvas.width,
+    y:canvas.height+20,
+    vx:(Math.random()-0.5)*4,
+    vy:-(Math.random()*8+4),
+    size:Math.random()*8+4,
+    color:['#ffb930','#ff6b4a','#2ec99a','#3b9eff','#ffd980'][Math.floor(Math.random()*5)],
+    life:1, decay:Math.random()*0.015+0.008,
+    rotation:Math.random()*360,
+    spin:(Math.random()-0.5)*8
+  }));
+  let frame=0;
+  function animate(){
+    if(frame++>180){ctx.clearRect(0,0,canvas.width,canvas.height);return;}
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    particles.forEach(p=>{
+      p.x+=p.vx; p.y+=p.vy; p.vy+=0.15;
+      p.life-=p.decay; p.rotation+=p.spin;
+      if(p.life<=0) return;
+      ctx.save();
+      ctx.globalAlpha=p.life;
+      ctx.fillStyle=p.color;
+      ctx.translate(p.x,p.y);
+      ctx.rotate(p.rotation*Math.PI/180);
+      ctx.fillRect(-p.size/2,-p.size/2,p.size,p.size);
+      ctx.restore();
+    });
+    requestAnimationFrame(animate);
+  }
+  animate();
+}
+
+// ═══════════════════════════════════════════════
+//  VOICE INPUT
+// ═══════════════════════════════════════════════
+let recognition=null,isRecording=false,voiceTranscript='',voiceSendTimer=null;
+function setVoiceReviewVisible(show){
+  const el=document.getElementById('voiceReview');
+  if(el) el.style.display=show?'flex':'none';
+}
+function setVoiceButtonState(mode){
+  const btn=document.getElementById('voiceBtn');
+  const status=document.getElementById('voiceStatus');
+  const label=btn?.querySelector('.mic-label');
+  if(!btn||!status||!label) return;
+  btn.classList.remove('recording','ready');
+  if(mode==='recording'){
+    btn.classList.add('recording');
+    label.textContent='正在听';
+    status.textContent='🎤 我在听，松开就会整理成一句话';
+    status.classList.add('vis');
+    setVoiceReviewVisible(false);
+  } else if(mode==='ready'){
+    btn.classList.add('ready');
+    label.textContent='等你确认';
+    status.textContent='✅ 我听到啦。你可以改一改，或者点“发出去”';
+    status.classList.add('vis');
+    setVoiceReviewVisible(true);
+  } else {
+    label.textContent='按住说话';
+    status.textContent='🎤 按住说话，松开后我会先帮你看一眼识别结果';
+    status.classList.remove('vis');
+    setVoiceReviewVisible(false);
+  }
+}
+function confirmVoiceInput(){
+  if(voiceSendTimer){clearTimeout(voiceSendTimer);voiceSendTimer=null;}
+  setVoiceButtonState('idle');
+  sendMsg();
+}
+function retryVoiceInput(){
+  if(voiceSendTimer){clearTimeout(voiceSendTimer);voiceSendTimer=null;}
+  voiceTranscript='';
+  const input=document.getElementById('chatInput');
+  input.value='';
+  input.placeholder='回答问题，或按住麦克风说话…';
+  input.style.height='auto';
+  setVoiceButtonState('idle');
+}
+function initVoice(){
+  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+  if(!SR){
+    document.getElementById('voiceBtn').style.display='none';
+    document.getElementById('chatHint').textContent='💡 当前浏览器不支持语音输入，可以先用文字输入';
+    return;
+  }
+  recognition=new SR();recognition.lang='zh-CN';recognition.continuous=false;recognition.interimResults=true;
+  recognition.onstart=()=>{
+    isRecording=true;voiceTranscript='';
+    if(voiceSendTimer){clearTimeout(voiceSendTimer);voiceSendTimer=null;}
+    setVoiceButtonState('recording');
+    document.getElementById('chatInput').placeholder='我在听…';
+  };
+  recognition.onresult=e=>{
+    let f='',im='';
+    for(let i=e.resultIndex;i<e.results.length;i++){
+      if(e.results[i].isFinal)f+=e.results[i][0].transcript;
+      else im+=e.results[i][0].transcript;
+    }
+    voiceTranscript=(f||im).trim();
+    const input=document.getElementById('chatInput');
+    input.value=voiceTranscript;
+    input.style.height='auto';
+    input.style.height=Math.min(input.scrollHeight,110)+'px';
+  };
+  recognition.onend=()=>{
+    isRecording=false;
+    document.getElementById('chatInput').placeholder='回答问题，或按住麦克风说话…';
+    if(voiceTranscript.trim()){
+      setVoiceButtonState('ready');
+    } else {
+      setVoiceButtonState('idle');
+    }
+  };
+  recognition.onerror=e=>{
+    isRecording=false;
+    setVoiceButtonState('idle');
+    if(e.error!=='aborted')showChatErr('语音识别出错，请检查麦克风权限');
+  };
+  const btn=document.getElementById('voiceBtn');
+  const start=()=>{if(!recognition||isRecording)return;try{recognition.start();}catch(e){}};
+  const stop=()=>{if(!recognition||!isRecording)return;recognition.stop();};
+  btn.addEventListener('mousedown',e=>{e.preventDefault();start();});
+  btn.addEventListener('mouseup',stop);btn.addEventListener('mouseleave',stop);
+  btn.addEventListener('touchstart',e=>{e.preventDefault();start();},{passive:false});
+  btn.addEventListener('touchend',e=>{e.preventDefault();stop();},{passive:false});
+  btn.addEventListener('touchcancel',stop);
+  setVoiceButtonState('idle');
+}
+
+// ═══════════════════════════════════════════════
+//  BOOT
+// ═══════════════════════════════════════════════
+document.addEventListener('DOMContentLoaded',()=>{
+  const savedCfg=loadCfg();
+  const savedCode=localStorage.getItem('jinkuang_code_v7');
+  const savedKeys=loadKeys();Object.assign(apiKeys,savedKeys);
+  monsterName=loadMonsterName();
+
+  if(savedCfg&&savedCfg.key){
+    cfg=savedCfg;cfg.provider='deepseek';
+    apiKeys['deepseek']=savedCfg.key;
+    const s=loadSet();
+    if(!s.grade){
+      // has key but no grade — show grade setup
+      document.getElementById('ovCode').classList.add('hidden');
+      document.getElementById('ovSetup').classList.remove('hidden');
+    } else {
+      document.getElementById('ovCode').classList.add('hidden');
+      initApp();
+    }
+  }
+  // else: show access code overlay (default)
+
+  // chat input
+  const ci=document.getElementById('chatInput');
+  ci.addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendMsg();}});
+  ci.addEventListener('input',function(){this.style.height='auto';this.style.height=Math.min(this.scrollHeight,110)+'px';});
+  ci.addEventListener('focus',()=>setTimeout(()=>{updateKeyboardInset();keepComposerVisible();},120));
+
+  // code input enter
+  const codeInput=document.getElementById('codeInput');
+  if(codeInput) codeInput.addEventListener('keydown',e=>{if(e.key==='Enter')verifyCode();});
+
+  updateKeyboardInset();
+  window.addEventListener('resize',updateKeyboardInset);
+  if(window.visualViewport){
+    window.visualViewport.addEventListener('resize',updateKeyboardInset);
+    window.visualViewport.addEventListener('scroll',updateKeyboardInset);
+  }
+
+  initVoice();
+
+  // ── 搭梯子联动：读取 URL 参数自动填题 ──
+  (function() {
+    const params = new URLSearchParams(window.location.search);
+    const q = params.get('q');
+    const w = params.get('w');
+    if (!q) return;
+
+    // 等待页面初始化完成后再填入
+    function tryFill() {
+      const qInput = document.getElementById('qInput');
+      const wInput = document.getElementById('wAns');
+      if (!qInput) { setTimeout(tryFill, 200); return; }
+
+      qInput.value = q;
+      qInput.dispatchEvent(new Event('input'));
+      if (w && wInput) {
+        wInput.value = w;
+        wInput.dispatchEvent(new Event('input'));
+      }
+
+      // 显示一个提示条
+      const tip = document.createElement('div');
+      tip.textContent = '📚 已从搭梯子导入题目，确认后点击开始复盘';
+      tip.style.cssText = 'position:fixed;top:60px;left:50%;transform:translateX(-50%);' +
+        'background:#2563eb;color:#fff;padding:10px 20px;border-radius:99px;' +
+        'font-size:13px;z-index:9999;white-space:nowrap;box-shadow:0 4px 12px rgba(37,99,235,.3);';
+      document.body.appendChild(tip);
+      setTimeout(() => tip.remove(), 4000);
+    }
+    setTimeout(tryFill, 300);
+  })();
+});
+</script>
+</body>
+</html>

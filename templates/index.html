@@ -205,9 +205,13 @@
 
     /* Result actions */
     .result-actions {
-      display: flex; gap: 12px; margin-top: 32px; padding-top: 20px;
+      display: flex; flex-direction: column; gap: 10px;
+      margin-top: 32px; padding-top: 20px;
       border-top: 1px solid var(--gray-100);
     }
+    .result-actions-row { display: flex; gap: 10px; }
+    .result-actions-row .btn-secondary,
+    .result-actions-row .btn-primary { flex: 1; }
     .btn-primary {
       flex: 1; padding: 12px; background: linear-gradient(135deg, var(--blue-600), var(--blue-700));
       color: #fff; border: none; border-radius: 10px; font-size: .9375rem;
@@ -220,6 +224,15 @@
       font-weight: 700; cursor: pointer; transition: background .15s;
     }
     .btn-secondary:hover { background: var(--blue-50); }
+
+    .btn-jinkuang {
+      width: 100%; padding: 14px;
+      background: linear-gradient(135deg, #f59e0b, #d97706);
+      color: #fff; border: none; border-radius: 10px;
+      font-size: .9375rem; font-weight: 700; cursor: pointer;
+      transition: opacity .15s; letter-spacing: .02em;
+    }
+    .btn-jinkuang:hover { opacity: .9; }
 
     /* Copy feedback */
     .copy-toast {
@@ -327,8 +340,13 @@
     </div>
     <div class="report-content" id="report-content"></div>
     <div class="result-actions">
-      <button class="btn-secondary" onclick="resetForm()">再分析一道题</button>
-      <button class="btn-primary" onclick="copyReport()">复制这份报告</button>
+      <div class="result-actions-row">
+        <button class="btn-secondary" onclick="resetForm()">再分析一道题</button>
+        <button class="btn-primary" onclick="copyReport()">复制这份报告</button>
+      </div>
+      <button class="btn-jinkuang" onclick="goToJinkuang()">
+        ⛏️ 让孩子去挖金矿练一练 →
+      </button>
     </div>
   </div>
 
@@ -481,6 +499,16 @@
       toast.classList.add('show');
       setTimeout(() => toast.classList.remove('show'), 2200);
     });
+  }
+
+  // ── 跳转挖金矿 ──
+  function goToJinkuang() {
+    const q = document.getElementById('question').value.trim();
+    const w = document.getElementById('student-answer').value.trim();
+    const params = new URLSearchParams();
+    if (q) params.set('q', q);
+    if (w) params.set('w', w);
+    window.open('/jinkuang?' + params.toString(), '_blank');
   }
 </script>
 

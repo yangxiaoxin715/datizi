@@ -5,12 +5,14 @@ import httpx
 from dotenv import load_dotenv
 from fastapi import FastAPI, Request
 from fastapi.responses import HTMLResponse, StreamingResponse
+from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel
 
 load_dotenv()
 
 app = FastAPI()
+app.mount("/static", StaticFiles(directory="static"), name="static")
 templates = Jinja2Templates(directory="templates")
 
 DEEPSEEK_API_KEY = os.getenv("DEEPSEEK_API_KEY", "")
@@ -117,6 +119,12 @@ def build_user_prompt(req: GenerateRequest) -> str:
 @app.get("/", response_class=HTMLResponse)
 async def index(request: Request):
     return templates.TemplateResponse("index.html", {"request": request})
+
+
+@app.get("/jinkuang", response_class=HTMLResponse)
+async def jinkuang():
+    with open("static/jinkuang.html", encoding="utf-8") as f:
+        return HTMLResponse(f.read())
 
 
 @app.post("/api/generate")
