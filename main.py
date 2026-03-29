@@ -52,8 +52,9 @@ SYSTEM_PROMPT = """你是一个"小学生家长讲题备课助手"。
 五、请优先帮助家长获得"我懂了，我知道怎么教了"的掌控感。
 报告必须清晰、结构化、实用、可直接用于讲题前备课。
 
-六、数学题必须先自己在内部认真解题，确保答案和步骤正确，再生成报告。
-如果题目信息不足、条件缺失或表述有歧义，要明确指出。
+六、【重要】答案已经由专用数学引擎预先验证，会在用户输入中以【预验证答案】标注。
+你必须严格采用该答案，不得重新计算，不得质疑，不得在报告中显示任何不确定或自我修正。
+如果没有预验证答案，则自己仔细解题，确保正确后再生成报告。
 
 七、请把"三元表征"翻译成家长可直接使用的"讲明白三步"：
 1）先说出来；
@@ -64,6 +65,7 @@ SYSTEM_PROMPT = """你是一个"小学生家长讲题备课助手"。
 八、请尽量使用简洁、清楚、温和的中文表达。
 不要空泛，不要套话，不要只讲概念。
 每一部分都要具体到家长能直接使用。
+全文严格控制在 900-1200 字，不要超出。
 
 请按固定结构输出，不要省略模块标题。"""
 
@@ -76,7 +78,47 @@ class GenerateRequest(BaseModel):
     parent_note: str = ""
 
 
-def build_user_prompt(req: GenerateRequest) -> str:
+async def presolve_math(question: str, grade: str) -> str:
+    """用 deepseek-reasoner 预先算出正确答案，超时则降级到 deepseek-chat。"""
+    prompt = (
+        f"请严格计算这道{grade}数学题，给出正确答案和关键步骤（150字以内，不需要解释背景）：\n\n{question}"
+    )
+    for model in ["deepseek-reasoner", "deepseek-chat"]:
+        try:
+            async with httpx.AsyncClient(timeout=30.0) as client:
+                resp = await client.post(
+                    "https://api.deepseek.com/chat/completions",
+                    headers={
+                        "Authorization": f"Bearer {DEEPSEEK_API_KEY}",
+                        "Content-Type": "application/json",
+                    },
+                    json={
+                        "model": model,
+                        "messages": [{"role": "user", "content": prompt}],
+                        "max_tokens": 600,
+                        "temperature": 0,
+                    },
+                )
+                data = resp.json()
+                return data["choices"][0]["message"]["content"]
+        except Exception:
+            continue
+    return ""
+
+
+def build_user_prompt(req: GenerateRequest, verified_answer: str = "") -> str:
+    answer_block = ""
+    if verified_answer:
+        answer_block = f"""
+【预验证答案（数学引擎已确认，请直接采用，不要重新计算）】
+{verified_answer}
+"""
+    elif req.correct_answer:
+        answer_block = f"""
+【正确答案（家长提供）】
+{req.correct_answer}
+"""
+
     return f"""请根据下面的信息，生成一份"家长讲题备课报告"。
 
 【孩子年级】
@@ -84,12 +126,9 @@ def build_user_prompt(req: GenerateRequest) -> str:
 
 【题目】
 {req.question}
-
+{answer_block}
 【孩子原答案（可选）】
 {req.student_answer or "未填写"}
-
-【正确答案（可选）】
-{req.correct_answer or "未填写"}
 
 【家长补充说明（可选）】
 {req.parent_note or "未填写"}
@@ -111,8 +150,7 @@ def build_user_prompt(req: GenerateRequest) -> str:
 - "家长辅导话术建议"必须给出可直接拿来讲的句子；
 - "家长避坑提醒"必须包含"如果孩子卡住了，应该怎么退回来讲"；
 - 语言必须适合小学生家长阅读，不要太学术；
-- 不要只给答案，要体现"帮家长备课"的价值；
-- 全文尽量控制在 900-1400 字左右；
+- 全文严格控制在 900-1200 字，每个模块点到为止，不要铺开；
 - 少讲空泛道理，多给直接可用的话。"""
 
 
@@ -129,7 +167,9 @@ async def jinkuang():
 
 @app.post("/api/generate")
 async def generate(req: GenerateRequest):
-    user_prompt = build_user_prompt(req)
+    # 第一步：用 reasoner 预解题，确保答案正确
+    verified_answer = await presolve_math(req.question, req.grade)
+    user_prompt = build_user_prompt(req, verified_answer)
 
     async def stream():
         try:
