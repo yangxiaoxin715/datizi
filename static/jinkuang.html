@@ -2635,11 +2635,15 @@ function retryVoiceInput(){
   input.style.height='auto';
   setVoiceButtonState('idle');
 }
+function isWechat(){return/MicroMessenger/i.test(navigator.userAgent);}
 function initVoice(){
   const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
-  if(!SR){
+  if(!SR||isWechat()){
     document.getElementById('voiceBtn').style.display='none';
-    document.getElementById('chatHint').textContent='💡 当前浏览器不支持语音输入，可以先用文字输入';
+    document.getElementById('chatHint').textContent=
+      isWechat()
+        ? '💡 微信内不支持语音，可用文字输入；或点右上角 → 在浏览器中打开，即可使用语音'
+        : '💡 当前浏览器不支持语音输入，可以先用文字输入';
     return;
   }
   recognition=new SR();recognition.lang='zh-CN';recognition.continuous=false;recognition.interimResults=true;
@@ -2673,7 +2677,12 @@ function initVoice(){
   recognition.onerror=e=>{
     isRecording=false;
     setVoiceButtonState('idle');
-    if(e.error!=='aborted')showChatErr('语音识别出错，请检查麦克风权限');
+    if(e.error!=='aborted'){
+      const msg=isWechat()
+        ? '微信内不支持语音，请点右上角 → 在浏览器中打开'
+        : '语音识别出错，请检查麦克风权限';
+      showChatErr(msg);
+    }
   };
   const btn=document.getElementById('voiceBtn');
   const start=()=>{if(!recognition||isRecording)return;try{recognition.start();}catch(e){}};
