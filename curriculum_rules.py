@@ -1,3 +1,9 @@
+TRACK_LABELS = {
+    "sync": "同步课内",
+    "advanced": "同年级拔高",
+}
+
+
 GRADE_POLICIES = {
     "一年级": {
         "allowed": ["20以内加减", "看图数数", "简单比较", "凑十与拆分", "直观图示"],
@@ -37,6 +43,45 @@ GRADE_POLICIES = {
     },
 }
 
+ADVANCED_GRADE_POLICIES = {
+    "一年级": {
+        "allowed": ["20以内加减", "比较推理", "简单和差关系", "从条件反推", "画图枚举"],
+        "forbidden": ["乘除法", "方程", "分数", "小数", "复杂方程型应用题"],
+        "ceiling": "允许一年级在不引入乘除法和方程的前提下，做简单拔高的比较、和差、反推题。",
+        "expression": "依然必须用口头关系、画图和试一试，不能直接上抽象字母。",
+    },
+    "二年级": {
+        "allowed": ["表内乘除", "差量变化", "简单和差关系", "简单周期规律", "较灵活数量比较"],
+        "forbidden": ["方程", "分数应用", "小数", "比例", "多层嵌套数量关系"],
+        "ceiling": "允许二年级在表内乘除和加减基础上做差量变化、和差和简单规律类拔高。",
+        "expression": "先讲变化前后谁多谁少，再讲差距怎么变，不能偷用方程。",
+    },
+    "三年级": {
+        "allowed": ["和差问题", "归一归总基础", "多步数量关系", "简单分数直观题", "列表或线段图"],
+        "forbidden": ["方程", "比例", "复杂工程行程", "分数方程"],
+        "ceiling": "允许三年级做和差、简单归总和多步数量关系拔高，但仍不能用方程。",
+        "expression": "优先线段图、列表和关系句，不得直接列方程。",
+    },
+    "四年级": {
+        "allowed": ["归总问题", "差倍问题", "较复杂对应关系", "基础工程思维", "多步数量关系"],
+        "forbidden": ["方程", "比例法", "分数方程", "初中代数化套路"],
+        "ceiling": "允许四年级做归总、差倍、基础工程思维等拔高题，但不能用方程和比例法。",
+        "expression": "先抓关系图和对应关系，再做四则运算拆解。",
+    },
+    "五年级": {
+        "allowed": ["简易方程", "较复杂工程问题", "分段变化", "相对速度基础", "分数与百分数综合"],
+        "forbidden": ["二元一次方程组", "比例极值技巧", "初中函数"],
+        "ceiling": "允许五年级做简易方程、分段变化和相对速度基础拔高，但不能跨到初中方法。",
+        "expression": "可以用简易方程和分段分析，但仍要先讲清每一段发生了什么。",
+    },
+    "六年级": {
+        "allowed": ["分数应用综合", "比和比例拔高", "分段行程", "较复杂相对速度", "稍复杂方程综合"],
+        "forbidden": ["二元一次方程组", "函数", "几何证明", "初中竞赛技巧"],
+        "ceiling": "允许六年级做课内拔高和常见奥数启蒙题，但不能跨到初中正式代数体系。",
+        "expression": "允许更长链条分析，但仍需保持小学阶段可转述的思路。",
+    },
+}
+
 TOPIC_BOUNDARIES = {
     "20以内加减": {"level": "一年级", "aliases": ["20以内加减", "凑十法", "破十法", "比大小", "看图列式"]},
     "100以内加减": {"level": "二年级", "aliases": ["100以内加减", "退位减法", "进位加法"]},
@@ -56,6 +101,14 @@ TOPIC_BOUNDARIES = {
     "百分数": {"level": "六年级", "aliases": ["百分数", "折扣", "成数", "税率", "利率"]},
     "比和比例": {"level": "六年级", "aliases": ["比和比例", "比例", "正比例", "反比例", "按比例分配"]},
     "圆与几何": {"level": "六年级", "aliases": ["圆", "圆周率", "圆面积", "圆周长"]},
+}
+
+ADVANCED_TOPIC_BOUNDARIES = {
+    "比较推理": {"level": "一年级", "aliases": ["谁多谁少", "比较推理", "多几少几", "哪一盘最多", "橘子最多"]},
+    "差量变化": {"level": "二年级", "aliases": ["差量变化", "多多少", "又进来", "差距变化"]},
+    "和差问题": {"level": "三年级", "aliases": ["和差问题", "年龄和", "和是", "比大", "比小"]},
+    "归总问题": {"level": "四年级", "aliases": ["归总问题", "提前完成", "平均每天", "原计划每天"]},
+    "分段相对速度": {"level": "五年级", "aliases": ["相向奔跑", "掉头", "相对速度", "分段行程", "相遇"]},
 }
 
 OUT_OF_SCOPE_HINTS = {
@@ -89,9 +142,15 @@ TOPIC_PREREQUISITES = {
 
 
 def grade_policy_text(level: str) -> str:
-    policy = GRADE_POLICIES.get(level)
+    return track_policy_text("sync", level)
+
+
+def track_policy_text(track: str, level: str) -> str:
+    policy_map = ADVANCED_GRADE_POLICIES if track == "advanced" else GRADE_POLICIES
+    policy = policy_map.get(level)
     if not policy:
-        return "请严格按当前学习水平边界判断，不能偷用更高层级方法。"
+        label = TRACK_LABELS.get(track, "当前路线")
+        return f"请严格按{label}的当前学习水平边界判断，不能偷用更高层级方法。"
     allowed = "、".join(policy["allowed"])
     forbidden = "、".join(policy["forbidden"])
     return (
@@ -101,36 +160,40 @@ def grade_policy_text(level: str) -> str:
     )
 
 
-def normalize_topic_name(text: str) -> str:
+def normalize_topic_name(text: str, track: str = "sync") -> str:
     if not text:
         return ""
     lowered = text.strip()
-    for canonical, meta in TOPIC_BOUNDARIES.items():
+    topic_map = ADVANCED_TOPIC_BOUNDARIES if track == "advanced" else TOPIC_BOUNDARIES
+    for canonical, meta in topic_map.items():
         for alias in meta["aliases"]:
             if alias in lowered or lowered in alias:
                 return canonical
     return ""
 
 
-def topic_boundary_text(topic: str) -> str:
-    canonical = normalize_topic_name(topic)
+def topic_boundary_text(topic: str, track: str = "sync") -> str:
+    canonical = normalize_topic_name(topic, track)
     if not canonical:
-        return "未识别到明确知识点，按当前学习水平通用边界判断。"
-    meta = TOPIC_BOUNDARIES[canonical]
+        label = TRACK_LABELS.get(track, "当前路线")
+        return f"未识别到明确知识点，按{label}的当前学习水平通用边界判断。"
+    topic_map = ADVANCED_TOPIC_BOUNDARIES if track == "advanced" else TOPIC_BOUNDARIES
+    meta = topic_map[canonical]
     prereqs = "、".join(TOPIC_PREREQUISITES.get(canonical, []))
     return f"知识点“{canonical}”通常从{meta['level']}开始系统学习。前置知识：{prereqs}。"
 
 
-def infer_missing_knowledge(reason: str, current_topic: str) -> list[str]:
-    topic = normalize_topic_name(current_topic)
+def infer_missing_knowledge(reason: str, current_topic: str, track: str = "sync") -> list[str]:
+    topic = normalize_topic_name(current_topic, track)
     if topic:
-      return TOPIC_PREREQUISITES.get(topic, [])
+        return TOPIC_PREREQUISITES.get(topic, [])
 
     for keyword, hints in OUT_OF_SCOPE_HINTS.items():
         if keyword in reason:
             return hints
 
-    for canonical, meta in TOPIC_BOUNDARIES.items():
+    topic_map = ADVANCED_TOPIC_BOUNDARIES if track == "advanced" else TOPIC_BOUNDARIES
+    for canonical, meta in topic_map.items():
         if canonical in reason or any(alias in reason for alias in meta["aliases"]):
             return TOPIC_PREREQUISITES.get(canonical, [])
 

@@ -3,7 +3,7 @@ import os
 import re
 
 import httpx
-from curriculum_rules import grade_policy_text, infer_missing_knowledge, topic_boundary_text
+from curriculum_rules import TRACK_LABELS, infer_missing_knowledge, topic_boundary_text, track_policy_text
 from dotenv import load_dotenv
 from fastapi import FastAPI, Request
 from fastapi.responses import HTMLResponse, StreamingResponse
@@ -102,6 +102,7 @@ OUT_OF_SCOPE_PROMPT = """你是“搭梯子”的年级边界说明助手。
 class GenerateRequest(BaseModel):
     actual_grade: str
     learning_level: str
+    track: str = "sync"
     question: str
     student_answer: str = ""
     correct_answer: str = ""
@@ -156,9 +157,9 @@ async def r1_solve(question: str, learning_level: str) -> str:
         return data["choices"][0]["message"]["content"]
 
 
-async def assess_grade_fit(question: str, actual_grade: str, learning_level: str, current_topic: str) -> dict:
-    policy_text = grade_policy_text(learning_level)
-    topic_text = topic_boundary_text(current_topic)
+async def assess_grade_fit(question: str, actual_grade: str, learning_level: str, current_topic: str, track: str) -> dict:
+    policy_text = track_policy_text(track, learning_level)
+    topic_text = topic_boundary_text(current_topic, track)
     async with httpx.AsyncClient(timeout=60.0) as client:
         resp = await client.post(
             "https://api.deepseek.com/chat/completions",
@@ -174,6 +175,7 @@ async def assess_grade_fit(question: str, actual_grade: str, learning_level: str
                         "role": "user",
                         "content": (
                             f"【孩子实际年级】\n{actual_grade}\n\n"
+                            f"【当前路线】\n{TRACK_LABELS.get(track, track)}\n\n"
                             f"【当前学习水平】\n{learning_level}\n\n"
                             f"【当前学习主题】\n{current_topic or '未填写'}\n\n"
                             f"【学习水平边界】\n{policy_text}\n\n"
@@ -204,11 +206,14 @@ def build_report_prompt(req: GenerateRequest, solution: str, assessment: dict) -
 【孩子实际年级】
 {req.actual_grade}
 
+【当前路线】
+{TRACK_LABELS.get(req.track, req.track)}
+
 【当前学习水平】
 {req.learning_level}
 
 【学习水平边界】
-{grade_policy_text(req.learning_level)}
+{track_policy_text(req.track, req.learning_level)}
 
 【学习水平判断】
 可解：{assessment.get("is_in_scope")}
@@ -249,19 +254,23 @@ def build_report_prompt(req: GenerateRequest, solution: str, assessment: dict) -
 - 必须只使用当前学习水平允许的方法，不能越界
 - 如果这道题更适合用高年级方法，就不要偷偷使用，直接留在允许方法范围内表达
 - 如果当前学习水平明显高于实际年级，可以提醒“按当前学习进度可以讲，但讲的时候要更慢、更直观”
+- 如果当前路线是“同年级拔高”，允许使用该年级拔高边界内的方法，但仍不能越界到更高年级或初中
 - 所有内容都要简洁，优先给家长能直接照着说的话
 - 每个模块只写最关键的 2-3 个要点，不展开"""
 
 
-def build_out_of_scope_prompt(actual_grade: str, learning_level: str, current_topic: str, question: str, assessment: dict) -> str:
+def build_out_of_scope_prompt(actual_grade: str, learning_level: str, current_topic: str, question: str, assessment: dict, track: str) -> str:
     missing = assessment.get("missing_knowledge") or []
     if not missing:
-        missing = infer_missing_knowledge(assessment.get("reason", ""), current_topic)
+        missing = infer_missing_knowledge(assessment.get("reason", ""), current_topic, track)
     missing_lines = "\n".join([f"- {item}" for item in missing]) or "- 当前信息不足，建议补充前置知识判断"
     return f"""请基于以下信息，写一份“超纲说明卡”。
 
 【孩子实际年级】
 {actual_grade}
+
+【当前路线】
+{TRACK_LABELS.get(track, track)}
 
 【当前学习水平】
 {learning_level}
@@ -273,10 +282,10 @@ def build_out_of_scope_prompt(actual_grade: str, learning_level: str, current_to
 {question}
 
 【学习水平边界】
-{grade_policy_text(learning_level)}
+{track_policy_text(track, learning_level)}
 
 【知识点边界】
-{topic_boundary_text(current_topic)}
+{topic_boundary_text(current_topic, track)}
 
 【超纲原因】
 {assessment.get("reason")}
@@ -297,6 +306,7 @@ def build_out_of_scope_prompt(actual_grade: str, learning_level: str, current_to
 要求：
 - 必须明确说“这题超出当前学习水平（{learning_level}）常规学习范围”
 - 必须明确说“等孩子学会……”再接上前置知识
+- 如果当前路线是“同年级拔高”，允许说明这是该路线之外的题，不要误说成普通同步超纲
 - 不要给完整题解
 - 不要出现高年级公式、方程或 LaTeX
 - 每个模块只写最关键的 2-3 个要点，不展开"""
@@ -323,6 +333,7 @@ async def generate(req: GenerateRequest):
                 req.actual_grade,
                 req.learning_level,
                 req.current_topic,
+                req.track,
             )
 
             if assessment.get("is_in_scope"):
@@ -340,6 +351,7 @@ async def generate(req: GenerateRequest):
                     req.current_topic,
                     req.question,
                     assessment,
+                    req.track,
                 )
 
             async with httpx.AsyncClient(timeout=120.0) as client:

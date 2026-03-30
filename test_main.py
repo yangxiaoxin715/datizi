@@ -72,11 +72,16 @@ import main
 
 class MainHelpersTest(unittest.TestCase):
     def test_grade_policy_mentions_allowed_and_forbidden_methods(self):
-        policy = main.grade_policy_text("四年级")
+        policy = curriculum_rules.track_policy_text("sync", "四年级")
         self.assertIn("只允许使用四年级及以下", policy)
         self.assertIn("数量关系", policy)
         self.assertIn("不得使用方程", policy)
         self.assertIn("不得一上来设x、y", policy)
+
+    def test_advanced_track_policy_allows_same_grade_challenge(self):
+        policy = curriculum_rules.track_policy_text("advanced", "一年级")
+        self.assertIn("一年级在不引入乘除法和方程的前提下", policy)
+        self.assertIn("简单和差关系", policy)
 
     def test_out_of_scope_prompt_mentions_next_knowledge(self):
         prompt = main.build_out_of_scope_prompt(
@@ -84,6 +89,7 @@ class MainHelpersTest(unittest.TestCase):
             learning_level="一年级",
             current_topic="简易方程",
             question="一个稍复杂的方程题",
+            track="sync",
             assessment={
                 "is_in_scope": False,
                 "reason": "需要简易方程",
@@ -110,6 +116,7 @@ class MainHelpersTest(unittest.TestCase):
         req = main.GenerateRequest(
             actual_grade="三年级",
             learning_level="六年级",
+            track="advanced",
             question="测试题",
             student_answer="",
             correct_answer="",
@@ -126,10 +133,15 @@ class MainHelpersTest(unittest.TestCase):
         self.assertIn("三年级", prompt)
         self.assertIn("当前学习水平", prompt)
         self.assertIn("六年级", prompt)
+        self.assertIn("同年级拔高", prompt)
 
     def test_topic_boundary_normalizes_alias(self):
-        topic = curriculum_rules.normalize_topic_name("孩子最近在学比和比例")
+        topic = curriculum_rules.normalize_topic_name("孩子最近在学比和比例", "sync")
         self.assertEqual(topic, "比和比例")
+
+    def test_advanced_topic_boundary_handles_orange_problem(self):
+        topic = curriculum_rules.normalize_topic_name("哪一盘的橘子最多", "advanced")
+        self.assertEqual(topic, "比较推理")
 
     def test_topic_boundary_text_mentions_prerequisites(self):
         text = curriculum_rules.topic_boundary_text("简易方程")
