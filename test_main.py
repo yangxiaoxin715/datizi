@@ -135,6 +135,28 @@ class MainHelpersTest(unittest.TestCase):
         self.assertIn("六年级", prompt)
         self.assertIn("同年级拔高", prompt)
 
+    def test_build_report_prompt_uses_brand_positioning_language(self):
+        req = main.GenerateRequest(
+            actual_grade="四年级",
+            learning_level="四年级",
+            track="sync",
+            question="题目",
+            student_answer="",
+            correct_answer="",
+            parent_note="",
+            current_topic="",
+        )
+        prompt = main.build_report_prompt(req, "答案", {
+            "is_in_scope": True,
+            "reason": "可解",
+            "allowed_method": "数量关系",
+            "forbidden_method": "方程",
+        })
+        self.assertIn("讲题副驾卡", prompt)
+        self.assertIn("家长现在第一句该怎么说", prompt)
+        self.assertNotIn("备课报告", prompt)
+        self.assertIn("把这道题讲透", prompt)
+
     def test_topic_boundary_normalizes_alias(self):
         topic = curriculum_rules.normalize_topic_name("孩子最近在学比和比例", "sync")
         self.assertEqual(topic, "比和比例")

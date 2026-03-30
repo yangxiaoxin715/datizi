@@ -4,6 +4,27 @@ const assert = require('assert');
 
 const html = fs.readFileSync('/Users/yangming/datizi/templates/index.html', 'utf8');
 
+assert.ok(
+  html.includes('顶级名师会这样讲'),
+  'hero 标题必须改成“顶级名师会这样讲”'
+);
+assert.ok(
+  html.includes('把一道题讲透，让家长照着讲也能讲得像样'),
+  'hero 副标题必须强调“一题讲透”和“照着讲”'
+);
+assert.ok(
+  html.includes('这道题，顶级名师会这样讲'),
+  '结果页标题应改成“这道题，顶级名师会这样讲”'
+);
+assert.ok(
+  html.includes('先看结论、切入口和第一句开口，再决定你自己讲，还是让孩子顺着台阶理解。'),
+  '结果页说明应改成新口径'
+);
+assert.ok(
+  !html.includes('这道题，建议你先这样开口'),
+  '旧结果页标题不应保留'
+);
+
 function extractFunctionSource(name, nextName) {
   const pattern = new RegExp(
     `function ${name}\\([^]*?\\n  \\}\\n\\n  function ${nextName}`,
