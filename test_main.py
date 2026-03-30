@@ -152,8 +152,11 @@ class MainHelpersTest(unittest.TestCase):
             "allowed_method": "数量关系",
             "forbidden_method": "方程",
         })
-        self.assertIn("讲题副驾卡", prompt)
-        self.assertIn("家长现在第一句该怎么说", prompt)
+        self.assertIn("顶级名师讲题卡", prompt)
+        self.assertIn("最后求什么", prompt)
+        self.assertIn("审题焦点", prompt)
+        self.assertIn("审题雷区", prompt)
+        self.assertIn("讲完要带走什么方法", prompt)
         self.assertNotIn("备课报告", prompt)
         self.assertIn("把这道题讲透", prompt)
 
