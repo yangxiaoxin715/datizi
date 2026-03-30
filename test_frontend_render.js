@@ -67,6 +67,7 @@ assert.strictEqual(sections[1].title, '孩子会卡在哪');
 const messy = `【结论】
 状态：可以按当前水平讲
 先抓：总数不变
+最后求什么：差量
 开口：先问总共有多少本
 ##1.先别急着讲，这题先抓什么先抓“总数不变”。
 ##2.孩子最可能卡在哪卡在分母会变。`;
@@ -78,6 +79,7 @@ assert.ok(normalized.includes('\n## 2. 孩子最可能卡在哪\n'));
 const conclusion = sandbox.extractConclusionBlock(normalized);
 assert.strictEqual(conclusion.status, '可以按当前水平讲');
 assert.strictEqual(conclusion.focus, '总数不变');
+assert.strictEqual(conclusion.target, '差量');
 assert.strictEqual(conclusion.opening, '先问总共有多少本');
 
 const structuredSections = sandbox.splitReportSections(normalized);

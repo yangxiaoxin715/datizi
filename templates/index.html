@@ -841,6 +841,7 @@
     return {
       status: readField('状态'),
       focus: readField('先抓'),
+      target: readField('最后求什么'),
       opening: readField('开口'),
     };
   }
@@ -894,6 +895,7 @@
           <span class="report-section-status ${/先别硬讲/.test(conclusion.status) ? 'warn' : 'ok'}">${escapeHtml(conclusion.status || '先看这一张')}</span>
         </div>
         ${conclusion.focus ? `<div class="report-section-summary">这题先抓：${escapeHtml(conclusion.focus)}</div>` : ''}
+        ${conclusion.target ? `<div class="report-section-helper">最后真正求的是：${escapeHtml(conclusion.target)}</div>` : ''}
         ${conclusion.opening ? `<div class="report-section-helper">第一句这样开口：${escapeHtml(conclusion.opening)}</div>` : ''}
       </section>
     ` : '';
