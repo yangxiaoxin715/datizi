@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>搭梯子 — 帮小学生家长把题讲明白</title>
+  <title>搭梯子 — 孩子来问题，先别急着讲</title>
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
   <style>
@@ -277,8 +277,8 @@
 <header class="site-header">
   <div class="header-icon">🪜</div>
   <h1>搭梯子</h1>
-  <p class="tagline">帮小学生家长把题讲明白</p>
-  <p class="sub-tagline">上传一道错题，生成一份家长讲题备课报告</p>
+  <p class="tagline">孩子来问题，先别急着讲</p>
+  <p class="sub-tagline">把题贴进来，我先告诉你先讲什么、哪里会卡、怎么退一步讲</p>
 </header>
 
 <div class="container">
@@ -286,8 +286,8 @@
   <!-- Input card -->
   <div class="card" id="input-card">
     <div class="card-intro">
-      <p class="intro-main">不只是答案，而是帮你知道怎么讲</p>
-      <p class="intro-sub">这不是给孩子看的解析，而是给家长备课用的报告：先讲什么、孩子哪里会卡、家长哪里容易翻车。</p>
+      <p class="intro-main">不是再给你一份题解，而是先帮你稳住讲题这一步</p>
+      <p class="intro-sub">上传一道孩子不会的题，我先告诉你：先讲什么、孩子最可能卡在哪、你第一句怎么开口、卡住了怎么退回来讲。</p>
     </div>
 
     <form id="question-form" novalidate>
@@ -307,9 +307,9 @@
 
       <!-- Question -->
       <div class="form-group">
-        <label class="form-label" for="question">错题题目 <span class="required">*</span></label>
+        <label class="form-label" for="question">把孩子不会的题贴进来 <span class="required">*</span></label>
         <textarea id="question" rows="4"
-          placeholder="把题目完整输入进来，包括题目中的数字、条件和问题…&#10;&#10;例：甲单独做一项工程6天完成，乙单独做8天完成，两人合作几天完成？"></textarea>
+          placeholder="把题目完整贴进来，包括数字、条件和最后的问题。&#10;&#10;例：甲单独做一项工程6天完成，乙单独做8天完成，两人合作几天完成？"></textarea>
         <input type="file" id="ocr-input" accept="image/*" capture="environment" style="display:none">
         <button type="button" class="ocr-btn" id="ocr-btn" onclick="document.getElementById('ocr-input').click()">
           📷 拍照识题
@@ -319,25 +319,25 @@
 
       <!-- Optional fields -->
       <button type="button" class="optional-toggle" id="toggle-optional">
-        <span id="toggle-icon">＋</span> 添加补充信息（选填，有助于报告更准确）
+        <span id="toggle-icon">＋</span> 补充一点现场情况（选填，会更准）
       </button>
       <div class="optional-fields" id="optional-fields">
 
         <div class="form-group">
-          <label class="form-label" for="student-answer">孩子原答案</label>
+          <label class="form-label" for="student-answer">孩子刚才写了什么</label>
           <input type="text" id="student-answer" placeholder="孩子写的答案是什么？">
-          <p class="optional-note">有助于判断孩子的误区在哪</p>
+          <p class="optional-note">有助于判断孩子是算错了，还是理解卡住了</p>
         </div>
 
         <div class="form-group">
-          <label class="form-label" for="correct-answer">正确答案（如果你已知道）</label>
+          <label class="form-label" for="correct-answer">正确答案（如果你已经知道）</label>
           <input type="text" id="correct-answer" placeholder="正确答案是什么？">
         </div>
 
         <div class="form-group">
-          <label class="form-label" for="parent-note">家长补充说明</label>
+          <label class="form-label" for="parent-note">孩子刚才卡在哪里</label>
           <textarea id="parent-note" rows="2"
-            placeholder="例：孩子总是搞不懂为什么要先求每天完成的份数 / 我自己也不确定怎么用孩子能懂的方式讲"></textarea>
+            placeholder="例：孩子总觉得分母不用变 / 我自己知道答案，但一开口就容易讲乱"></textarea>
         </div>
 
       </div>
@@ -345,7 +345,7 @@
       <div id="form-error" class="error-msg" style="display:none"></div>
 
       <button type="submit" class="btn-submit" id="submit-btn">
-        生成讲题备课报告
+        看看这题怎么讲
       </button>
 
     </form>
@@ -354,22 +354,22 @@
   <!-- Loading card -->
   <div class="card" id="loading-card">
     <div class="loading-icon-wrap">🪜</div>
-    <h3>正在为你准备讲题备课报告…</h3>
-    <p>正在思考并生成报告，通常需要 40–60 秒</p>
+    <h3>正在生成讲题副驾卡…</h3>
+    <p>我会先判断这题先讲什么、哪里最容易卡住，通常需要 40–60 秒</p>
     <div class="progress-bar"><div class="progress-fill"></div></div>
   </div>
 
   <!-- Result card -->
   <div class="card" id="result-card">
     <div class="result-header">
-      <h2>这道题，建议你这样讲</h2>
-      <p>不是只给答案，而是帮你更快看懂题目，并用孩子能听懂的方式讲出来。</p>
+      <h2>这道题，建议你先这样开口</h2>
+      <p>先看切入口、卡点和退一步讲法，再决定你自己讲，还是让孩子顺着台阶理解。</p>
     </div>
     <div class="report-content" id="report-content"></div>
     <div class="result-actions">
       <div class="result-actions-row">
-        <button class="btn-secondary" onclick="resetForm()">再分析一道题</button>
-        <button class="btn-primary" onclick="copyReport()">复制这份报告</button>
+        <button class="btn-secondary" onclick="resetForm()">再看一道题</button>
+        <button class="btn-primary" onclick="copyReport()">复制这张副驾卡</button>
       </div>
       <button class="btn-jinkuang" onclick="goToJinkuang()">
         ⛏️ 让孩子去挖金矿练一练 →
