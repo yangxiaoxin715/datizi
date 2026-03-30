@@ -238,6 +238,11 @@ def build_report_prompt(req: GenerateRequest, solution: str, assessment: dict) -
 
 请严格按照以下结构输出：
 
+【结论】
+状态：一句话判断，只能二选一“可以按当前水平讲”或“这题先别硬讲”
+先抓：只写这题最先该抓的1个关键点，不超过12个字
+开口：只写家长现在第一句该怎么说，不超过30个字
+
 ## 1. 先别急着讲，这题先抓什么
 ## 2. 孩子最可能卡在哪
 ## 3. 家长第一句可以怎么开口
@@ -297,6 +302,11 @@ def build_out_of_scope_prompt(actual_grade: str, learning_level: str, current_to
 {assessment.get("suggested_grade", learning_level)}
 
 请严格按照以下结构输出：
+
+【结论】
+状态：只能写“这题先别硬讲”
+先抓：只写超出的关键点，不超过12个字
+开口：只写家长现在更适合怎么说，不超过30个字
 
 ## 1. 这题为什么现在还讲不了
 ## 2. 不是孩子笨，而是还没学到哪里

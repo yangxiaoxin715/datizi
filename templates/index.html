@@ -795,8 +795,58 @@
     return cleaned;
   }
 
+  function normalizeReportStructure(text) {
+    let normalized = sanitizeMathText(text);
+    const knownTitles = [
+      '## 1. 先别急着讲，这题先抓什么',
+      '## 2. 孩子最可能卡在哪',
+      '## 3. 家长第一句可以怎么开口',
+      '## 4. 如果孩子没懂，怎么退一步讲',
+      '## 5. 讲题顺序（最多3步）',
+      '## 6. 家长最容易讲崩的地方',
+      '## 7. 标准答案与步骤',
+      '## 8. 讲完后怎么确认孩子是真懂了',
+      '## 1. 这题为什么现在还讲不了',
+      '## 2. 不是孩子笨，而是还没学到哪里',
+      '## 3. 等孩子学会什么，这题就能开始解',
+      '## 4. 家长现在更适合怎么做',
+    ];
+
+    normalized = normalized
+      .replace(/([^\n])\s*(【结论】)/g, '$1\n$2')
+      .replace(/([^\n])\s*(##\s*\d+\.)/g, '$1\n$2');
+
+    knownTitles.forEach((title) => {
+      const compact = title.replace(/\s+/g, '\\s*');
+      const pattern = new RegExp(compact, 'g');
+      normalized = normalized.replace(pattern, `\n${title}\n`);
+    });
+
+    normalized = normalized
+      .replace(/\n{3,}/g, '\n\n')
+      .replace(/^\n+/, '')
+      .trim();
+
+    return normalized;
+  }
+
+  function extractConclusionBlock(text) {
+    const match = text.match(/【结论】\s*([\s\S]*?)(?=\n##\s*\d+\.|\s*$)/);
+    if (!match) return null;
+    const block = match[1].trim();
+    const readField = (label) => {
+      const fieldMatch = block.match(new RegExp(`${label}[:：]\\s*([^\\n]+)`));
+      return fieldMatch ? fieldMatch[1].trim() : '';
+    };
+    return {
+      status: readField('状态'),
+      focus: readField('先抓'),
+      opening: readField('开口'),
+    };
+  }
+
   function splitReportSections(text) {
-    const cleaned = sanitizeMathText(text);
+    const cleaned = normalizeReportStructure(text).replace(/【结论】[\s\S]*?(?=\n##\s*\d+\.|\s*$)/, '').trim();
     const parts = cleaned.split(/\n(?=##\s*)/).map(part => part.trim()).filter(Boolean);
     if (!parts.length) return [];
 
@@ -826,53 +876,32 @@
       .replace(/'/g, '&#39;');
   }
 
-  function getPrimarySummary(section) {
-    const body = (section.body || '').trim();
-    if (!body) return '';
-    const firstLine = body.split(/\n+/).map(line => line.trim()).find(Boolean) || '';
-    return firstLine.replace(/^[-*]\s*/, '').slice(0, 90);
-  }
-
-  function getPrimaryStatus(section) {
-    const text = `${section.title} ${section.body || ''}`;
-    if (/超出|超纲|讲不了|学不了|不适合/.test(text)) {
-      return { label: '目前先别硬讲', className: 'warn' };
-    }
-    return { label: '可以按当前水平讲', className: 'ok' };
-  }
-
-  function getPrimaryHelper(section) {
-    const text = `${section.title} ${section.body || ''}`;
-    if (/超出|超纲|讲不了|学不了|不适合/.test(text)) {
-      return '先把这张结论卡看完，再看后面“还差什么知识”和“家长现在怎么做”。';
-    }
-    return '先照着这张卡开口，再往下看“孩子会卡在哪”和“怎么退一步讲”。';
-  }
-
   function renderReport(text) {
     const container = document.getElementById('report-content');
-    const sections = splitReportSections(text);
+    const normalized = normalizeReportStructure(text);
+    const conclusion = extractConclusionBlock(normalized);
+    const sections = splitReportSections(normalized);
 
     if (!sections.length) {
-      container.innerHTML = marked.parse(sanitizeMathText(text));
+      container.innerHTML = marked.parse(normalized);
       return;
     }
 
-    container.innerHTML = sections.map((section, idx) => {
+    const summaryCard = conclusion ? `
+      <section class="report-section primary">
+        <div>
+          <span class="report-section-kicker">结论</span>
+          <span class="report-section-status ${/先别硬讲/.test(conclusion.status) ? 'warn' : 'ok'}">${escapeHtml(conclusion.status || '先看这一张')}</span>
+        </div>
+        ${conclusion.focus ? `<div class="report-section-summary">这题先抓：${escapeHtml(conclusion.focus)}</div>` : ''}
+        ${conclusion.opening ? `<div class="report-section-helper">第一句这样开口：${escapeHtml(conclusion.opening)}</div>` : ''}
+      </section>
+    ` : '';
+
+    container.innerHTML = summaryCard + sections.map((section) => {
       const bodyHtml = marked.parse(section.body || '');
-      const summary = idx === 0 ? getPrimarySummary(section) : '';
-      const status = idx === 0 ? getPrimaryStatus(section) : null;
-      const helper = idx === 0 ? getPrimaryHelper(section) : '';
       return `
-        <section class="report-section ${idx === 0 ? 'primary' : ''}">
-          ${idx === 0 ? `
-            <div>
-              <span class="report-section-kicker">结论</span>
-              <span class="report-section-status ${status.className}">${escapeHtml(status.label)}</span>
-            </div>
-            ${summary ? `<div class="report-section-summary">${escapeHtml(summary)}</div>` : ''}
-            <div class="report-section-helper">先看这张卡。${escapeHtml(helper)}</div>
-          ` : ''}
+        <section class="report-section">
           <div class="report-section-header">
             <span class="report-section-index">${section.index}</span>
             <h3 class="report-section-title">${section.title}</h3>
