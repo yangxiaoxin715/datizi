@@ -69,12 +69,12 @@ const messy = `【结论】
 先抓：总数不变
 最后求什么：差量
 开口：先问总共有多少本
-##1.先别急着讲，这题先抓什么先抓“总数不变”。
-##2.孩子最可能卡在哪卡在分母会变。`;
+##1.审题焦点先抓“总数不变”。
+##2.审题雷区孩子容易把“多多少”看成“是多少”。`;
 
 const normalized = sandbox.normalizeReportStructure(messy);
-assert.ok(normalized.includes('\n## 1. 先别急着讲，这题先抓什么\n'));
-assert.ok(normalized.includes('\n## 2. 孩子最可能卡在哪\n'));
+assert.ok(normalized.includes('\n## 1. 审题焦点\n'));
+assert.ok(normalized.includes('\n## 2. 审题雷区\n'));
 
 const conclusion = sandbox.extractConclusionBlock(normalized);
 assert.strictEqual(conclusion.status, '可以按当前水平讲');
@@ -84,5 +84,7 @@ assert.strictEqual(conclusion.opening, '先问总共有多少本');
 
 const structuredSections = sandbox.splitReportSections(normalized);
 assert.strictEqual(structuredSections.length, 2, 'structured markdown should still split into two sections');
+assert.strictEqual(structuredSections[0].title, '1. 审题焦点');
+assert.strictEqual(structuredSections[1].title, '2. 审题雷区');
 
 console.log('frontend render tests passed');
