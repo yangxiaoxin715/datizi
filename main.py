@@ -3,6 +3,7 @@ import os
 import re
 
 import httpx
+from curriculum_rules import grade_policy_text, infer_missing_knowledge, topic_boundary_text
 from dotenv import load_dotenv
 from fastapi import FastAPI, Request
 from fastapi.responses import HTMLResponse, StreamingResponse
@@ -17,39 +18,6 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
 templates = Jinja2Templates(directory="templates")
 
 DEEPSEEK_API_KEY = os.getenv("DEEPSEEK_API_KEY", "")
-
-GRADE_POLICIES = {
-    "一年级": {
-        "allowed": ["20以内加减", "看图数数", "简单比较", "凑十与拆分", "直观图示"],
-        "forbidden": ["乘除法", "方程", "分数", "小数", "复杂数量关系"],
-        "ceiling": "只允许使用一年级及以下已学内容，必须依赖直观图示、数数、拆分、简单加减。",
-    },
-    "二年级": {
-        "allowed": ["表内乘除", "简单倍数关系", "长度时间人民币基础题", "两步以内数量关系"],
-        "forbidden": ["方程", "分数应用题", "小数", "复杂比例关系"],
-        "ceiling": "只允许使用二年级及以下已学内容，优先乘除意义、倍数关系和直观数量变化。",
-    },
-    "三年级": {
-        "allowed": ["万以内数", "乘除法竖式", "简单分数初步", "周长面积初步", "两三步数量关系"],
-        "forbidden": ["方程", "小数运算", "比例", "复杂行程与工程"],
-        "ceiling": "只允许使用三年级及以下已学内容，优先整数运算、简单分数直观理解和基础数量关系。",
-    },
-    "四年级": {
-        "allowed": ["整数四则运算", "份数思维", "倍数关系", "对应关系", "数量关系分析"],
-        "forbidden": ["方程", "用字母表示未知数", "分数方程", "比例法"],
-        "ceiling": "只允许使用四年级及以下已学内容，优先份数、倍数、对应关系和数量关系，不得使用方程。",
-    },
-    "五年级": {
-        "allowed": ["小数", "分数基础", "简易方程初步", "平均数", "较完整数量关系"],
-        "forbidden": ["比例法", "超纲代数技巧", "复杂方程组"],
-        "ceiling": "只允许使用五年级及以下已学内容，可以使用简易方程，但不能使用比例法和更高年级代数技巧。",
-    },
-    "六年级": {
-        "allowed": ["分数应用题", "比和比例初步", "稍复杂方程", "较复杂数量关系"],
-        "forbidden": ["初中代数", "二元一次方程组", "函数", "几何证明"],
-        "ceiling": "只允许使用六年级及以下已学内容，可以使用分数、比例初步和稍复杂方程，但不能跨到初中方法。",
-    },
-}
 
 # ── Step 1 系统提示：只让 R1 解题，不写报告 ──
 SOLVE_PROMPT = """你是一个严谨的小学数学解题引擎。
@@ -132,20 +100,13 @@ OUT_OF_SCOPE_PROMPT = """你是“搭梯子”的年级边界说明助手。
 
 
 class GenerateRequest(BaseModel):
-    grade: str
+    actual_grade: str
+    learning_level: str
     question: str
     student_answer: str = ""
     correct_answer: str = ""
     parent_note: str = ""
-
-
-def grade_policy_text(grade: str) -> str:
-    policy = GRADE_POLICIES.get(grade)
-    if not policy:
-        return "请严格按当前年级常规教学边界判断，不能偷用更高年级方法。"
-    allowed = "、".join(policy["allowed"])
-    forbidden = "、".join(policy["forbidden"])
-    return f"{policy['ceiling']} 允许方法：{allowed}。不得使用{forbidden}。"
+    current_topic: str = ""
 
 
 def sanitize_report_text(text: str) -> str:
@@ -172,7 +133,7 @@ def extract_json_object(text: str) -> dict:
     return json.loads(match.group(0))
 
 
-async def r1_solve(question: str, grade: str) -> str:
+async def r1_solve(question: str, learning_level: str) -> str:
     """Step 1：用 deepseek-reasoner 解题，返回完整解题结果。"""
     async with httpx.AsyncClient(timeout=60.0) as client:
         resp = await client.post(
@@ -185,7 +146,7 @@ async def r1_solve(question: str, grade: str) -> str:
                 "model": "deepseek-reasoner",
                 "messages": [
                     {"role": "system", "content": SOLVE_PROMPT},
-                    {"role": "user", "content": f"年级：{grade}\n\n题目：{question}"},
+                    {"role": "user", "content": f"当前学习水平：{learning_level}\n\n题目：{question}"},
                 ],
                 "max_tokens": 1000,
                 "temperature": 0,
@@ -195,8 +156,9 @@ async def r1_solve(question: str, grade: str) -> str:
         return data["choices"][0]["message"]["content"]
 
 
-async def assess_grade_fit(question: str, grade: str) -> dict:
-    policy_text = grade_policy_text(grade)
+async def assess_grade_fit(question: str, actual_grade: str, learning_level: str, current_topic: str) -> dict:
+    policy_text = grade_policy_text(learning_level)
+    topic_text = topic_boundary_text(current_topic)
     async with httpx.AsyncClient(timeout=60.0) as client:
         resp = await client.post(
             "https://api.deepseek.com/chat/completions",
@@ -210,7 +172,14 @@ async def assess_grade_fit(question: str, grade: str) -> dict:
                     {"role": "system", "content": GRADE_GUARD_PROMPT},
                     {
                         "role": "user",
-                        "content": f"【当前年级】\n{grade}\n\n【年级边界】\n{policy_text}\n\n【题目】\n{question}",
+                        "content": (
+                            f"【孩子实际年级】\n{actual_grade}\n\n"
+                            f"【当前学习水平】\n{learning_level}\n\n"
+                            f"【当前学习主题】\n{current_topic or '未填写'}\n\n"
+                            f"【学习水平边界】\n{policy_text}\n\n"
+                            f"【知识点边界】\n{topic_text}\n\n"
+                            f"【题目】\n{question}"
+                        ),
                     },
                 ],
                 "max_tokens": 500,
@@ -223,7 +192,7 @@ async def assess_grade_fit(question: str, grade: str) -> dict:
         assessment.setdefault("is_in_scope", False)
         assessment.setdefault("reason", "未能完成年级判断")
         assessment.setdefault("missing_knowledge", [])
-        assessment.setdefault("suggested_grade", grade)
+        assessment.setdefault("suggested_grade", learning_level)
         assessment.setdefault("allowed_method", "")
         assessment.setdefault("forbidden_method", "")
         return assessment
@@ -232,17 +201,23 @@ async def assess_grade_fit(question: str, grade: str) -> dict:
 def build_report_prompt(req: GenerateRequest, solution: str, assessment: dict) -> str:
     return f"""请基于以下信息生成一份“讲题副驾卡”。
 
-【孩子年级】
-{req.grade}
+【孩子实际年级】
+{req.actual_grade}
 
-【年级边界】
-{grade_policy_text(req.grade)}
+【当前学习水平】
+{req.learning_level}
 
-【年级判断】
+【学习水平边界】
+{grade_policy_text(req.learning_level)}
+
+【学习水平判断】
 可解：{assessment.get("is_in_scope")}
 原因：{assessment.get("reason")}
 允许方法：{assessment.get("allowed_method")}
 禁止方法：{assessment.get("forbidden_method")}
+
+【当前学习主题】
+{req.current_topic or "未填写"}
 
 【题目】
 {req.question}
@@ -271,25 +246,37 @@ def build_report_prompt(req: GenerateRequest, solution: str, assessment: dict) -
 - 第1-6部分必须优先服务“家长现在怎么讲”
 - 第7部分直接整理自上方R1解题结果，保持数字和步骤一致
 - 第8部分给1-2个检查理解的小问题，不要再出完整练习题
-- 必须只使用当前年级允许的方法，不能越界
+- 必须只使用当前学习水平允许的方法，不能越界
 - 如果这道题更适合用高年级方法，就不要偷偷使用，直接留在允许方法范围内表达
+- 如果当前学习水平明显高于实际年级，可以提醒“按当前学习进度可以讲，但讲的时候要更慢、更直观”
 - 所有内容都要简洁，优先给家长能直接照着说的话
 - 每个模块只写最关键的 2-3 个要点，不展开"""
 
 
-def build_out_of_scope_prompt(grade: str, question: str, assessment: dict) -> str:
+def build_out_of_scope_prompt(actual_grade: str, learning_level: str, current_topic: str, question: str, assessment: dict) -> str:
     missing = assessment.get("missing_knowledge") or []
+    if not missing:
+        missing = infer_missing_knowledge(assessment.get("reason", ""), current_topic)
     missing_lines = "\n".join([f"- {item}" for item in missing]) or "- 当前信息不足，建议补充前置知识判断"
     return f"""请基于以下信息，写一份“超纲说明卡”。
 
-【孩子年级】
-{grade}
+【孩子实际年级】
+{actual_grade}
+
+【当前学习水平】
+{learning_level}
+
+【当前学习主题】
+{current_topic or "未填写"}
 
 【题目】
 {question}
 
-【年级边界】
-{grade_policy_text(grade)}
+【学习水平边界】
+{grade_policy_text(learning_level)}
+
+【知识点边界】
+{topic_boundary_text(current_topic)}
 
 【超纲原因】
 {assessment.get("reason")}
@@ -298,7 +285,7 @@ def build_out_of_scope_prompt(grade: str, question: str, assessment: dict) -> st
 {missing_lines}
 
 【更适合的起点年级】
-{assessment.get("suggested_grade", grade)}
+{assessment.get("suggested_grade", learning_level)}
 
 请严格按照以下结构输出：
 
@@ -308,7 +295,7 @@ def build_out_of_scope_prompt(grade: str, question: str, assessment: dict) -> st
 ## 4. 家长现在更适合怎么做
 
 要求：
-- 必须明确说“这题超出{grade}常规学习范围”
+- 必须明确说“这题超出当前学习水平（{learning_level}）常规学习范围”
 - 必须明确说“等孩子学会……”再接上前置知识
 - 不要给完整题解
 - 不要出现高年级公式、方程或 LaTeX
@@ -331,18 +318,29 @@ async def generate(req: GenerateRequest):
 
     async def stream():
         try:
-            assessment = await assess_grade_fit(req.question, req.grade)
+            assessment = await assess_grade_fit(
+                req.question,
+                req.actual_grade,
+                req.learning_level,
+                req.current_topic,
+            )
 
             if assessment.get("is_in_scope"):
                 if req.correct_answer:
                     solution = f"答案（家长提供）：{req.correct_answer}"
                 else:
-                    solution = await r1_solve(req.question, req.grade)
+                    solution = await r1_solve(req.question, req.learning_level)
                 system_prompt = REPORT_PROMPT
                 report_prompt = build_report_prompt(req, solution, assessment)
             else:
                 system_prompt = OUT_OF_SCOPE_PROMPT
-                report_prompt = build_out_of_scope_prompt(req.grade, req.question, assessment)
+                report_prompt = build_out_of_scope_prompt(
+                    req.actual_grade,
+                    req.learning_level,
+                    req.current_topic,
+                    req.question,
+                    assessment,
+                )
 
             async with httpx.AsyncClient(timeout=120.0) as client:
                 async with client.stream(

@@ -343,17 +343,30 @@
 
     <form id="question-form" novalidate>
 
-      <!-- Grade -->
+      <!-- Actual grade -->
       <div class="form-group">
-        <label class="form-label">孩子年级 <span class="required">*</span></label>
+        <label class="form-label">孩子现在几年级 <span class="required">*</span></label>
         <div class="grade-grid">
-          <button type="button" class="grade-btn" data-grade="一年级">一年级</button>
-          <button type="button" class="grade-btn" data-grade="二年级">二年级</button>
-          <button type="button" class="grade-btn" data-grade="三年级">三年级</button>
-          <button type="button" class="grade-btn" data-grade="四年级">四年级</button>
-          <button type="button" class="grade-btn" data-grade="五年级">五年级</button>
-          <button type="button" class="grade-btn" data-grade="六年级">六年级</button>
+          <button type="button" class="grade-btn actual-grade" data-grade="一年级">一年级</button>
+          <button type="button" class="grade-btn actual-grade" data-grade="二年级">二年级</button>
+          <button type="button" class="grade-btn actual-grade" data-grade="三年级">三年级</button>
+          <button type="button" class="grade-btn actual-grade" data-grade="四年级">四年级</button>
+          <button type="button" class="grade-btn actual-grade" data-grade="五年级">五年级</button>
+          <button type="button" class="grade-btn actual-grade" data-grade="六年级">六年级</button>
         </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="learning-level">这道题按孩子目前学到的程度，更接近几年级 <span class="required">*</span></label>
+        <select id="learning-level" style="width:100%; border:1.5px solid var(--gray-200); border-radius:10px; padding:12px 14px; font-size:.9375rem; font-family:inherit; color:var(--gray-900); background:#fff; outline:none;">
+          <option value="同步年级">和现在年级同步</option>
+          <option value="一年级">一年级</option>
+          <option value="二年级">二年级</option>
+          <option value="三年级">三年级</option>
+          <option value="四年级">四年级</option>
+          <option value="五年级">五年级</option>
+          <option value="六年级">六年级</option>
+        </select>
       </div>
 
       <!-- Question -->
@@ -389,6 +402,11 @@
           <label class="form-label" for="parent-note">孩子刚才卡在哪里</label>
           <textarea id="parent-note" rows="2"
             placeholder="例：孩子总觉得分母不用变 / 我自己知道答案，但一开口就容易讲乱"></textarea>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="current-topic">孩子当前正在学什么（选填）</label>
+          <input type="text" id="current-topic" placeholder="例：份数思维 / 简易方程 / 比和比例">
         </div>
 
       </div>
@@ -460,12 +478,12 @@
   let loadingStageTimer = null;
 
   // ── Grade selector ──
-  let selectedGrade = '';
-  document.querySelectorAll('.grade-btn').forEach(btn => {
+  let selectedActualGrade = '';
+  document.querySelectorAll('.grade-btn.actual-grade').forEach(btn => {
     btn.addEventListener('click', () => {
-      document.querySelectorAll('.grade-btn').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.grade-btn.actual-grade').forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
-      selectedGrade = btn.dataset.grade;
+      selectedActualGrade = btn.dataset.grade;
     });
   });
 
@@ -484,8 +502,8 @@
     const question = document.getElementById('question').value.trim();
     const errEl    = document.getElementById('form-error');
 
-    if (!selectedGrade) {
-      errEl.textContent = '请先选择孩子的年级';
+    if (!selectedActualGrade) {
+      errEl.textContent = '请先选择孩子现在几年级';
       errEl.style.display = 'block';
       return;
     }
@@ -496,12 +514,17 @@
     }
     errEl.style.display = 'none';
 
+    const learningLevelValue = document.getElementById('learning-level').value;
+    const resolvedLearningLevel = learningLevelValue === '同步年级' ? selectedActualGrade : learningLevelValue;
+
     const payload = {
-      grade:          selectedGrade,
+      actual_grade:   selectedActualGrade,
+      learning_level: resolvedLearningLevel,
       question:       question,
       student_answer: document.getElementById('student-answer').value.trim(),
       correct_answer: document.getElementById('correct-answer').value.trim(),
       parent_note:    document.getElementById('parent-note').value.trim(),
+      current_topic:  document.getElementById('current-topic').value.trim(),
     };
 
     showLoading();
