@@ -175,7 +175,58 @@
       50% { transform: translateY(-8px); }
     }
     #loading-card h3 { font-size: 1.05rem; color: var(--gray-700); margin-bottom: 8px; }
-    #loading-card p  { font-size: .875rem; color: var(--gray-400); margin-bottom: 24px; }
+    #loading-card p  { font-size: .875rem; color: var(--gray-400); margin-bottom: 18px; }
+    .loading-stages {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+      margin: 0 0 20px;
+      text-align: left;
+    }
+    .loading-stage {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 12px;
+      border-radius: 10px;
+      background: var(--gray-50);
+      color: var(--gray-400);
+      border: 1px solid var(--gray-100);
+      transition: all .2s ease;
+      font-size: .875rem;
+      font-weight: 600;
+    }
+    .loading-stage-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: var(--gray-200);
+      flex-shrink: 0;
+      transition: all .2s ease;
+    }
+    .loading-stage.active {
+      color: var(--blue-700);
+      background: var(--blue-50);
+      border-color: var(--blue-100);
+      box-shadow: 0 0 0 2px rgba(37,99,235,.08);
+    }
+    .loading-stage.active .loading-stage-dot {
+      background: var(--blue-600);
+      box-shadow: 0 0 0 4px rgba(37,99,235,.12);
+    }
+    .loading-stage.done {
+      color: var(--gray-700);
+      background: #f0fdf4;
+      border-color: #bbf7d0;
+    }
+    .loading-stage.done .loading-stage-dot {
+      background: var(--green-500);
+    }
+    @media (max-width: 500px) {
+      .loading-stages {
+        grid-template-columns: 1fr;
+      }
+    }
     .progress-bar {
       height: 4px; background: var(--gray-100); border-radius: 9999px; overflow: hidden;
     }
@@ -355,7 +406,25 @@
   <div class="card" id="loading-card">
     <div class="loading-icon-wrap">🪜</div>
     <h3>正在生成讲题副驾卡…</h3>
-    <p>我会先判断这题先讲什么、哪里最容易卡住，通常需要 40–60 秒</p>
+    <p id="loading-status-text">我会先判断这题先讲什么、哪里最容易卡住，通常需要 40–60 秒</p>
+    <div class="loading-stages" id="loading-stages">
+      <div class="loading-stage active" data-stage="0">
+        <span class="loading-stage-dot"></span>
+        <span>正在读题</span>
+      </div>
+      <div class="loading-stage" data-stage="1">
+        <span class="loading-stage-dot"></span>
+        <span>正在核对答案</span>
+      </div>
+      <div class="loading-stage" data-stage="2">
+        <span class="loading-stage-dot"></span>
+        <span>正在整理讲法</span>
+      </div>
+      <div class="loading-stage" data-stage="3">
+        <span class="loading-stage-dot"></span>
+        <span>正在生成副驾卡</span>
+      </div>
+    </div>
     <div class="progress-bar"><div class="progress-fill"></div></div>
   </div>
 
@@ -382,6 +451,14 @@
 <div class="copy-toast" id="copy-toast">已复制到剪贴板 ✓</div>
 
 <script>
+  const loadingStageTexts = [
+    '正在读题，先抓这题的条件和关键变化…',
+    '正在核对答案，确保后面的讲法建立在正确步骤上…',
+    '正在整理讲法，判断先讲什么、哪里最容易卡住…',
+    '正在生成副驾卡，把开口话术和退一步讲法整理出来…',
+  ];
+  let loadingStageTimer = null;
+
   // ── Grade selector ──
   let selectedGrade = '';
   document.querySelectorAll('.grade-btn').forEach(btn => {
@@ -435,6 +512,12 @@
     document.getElementById('input-card').style.display   = 'none';
     document.getElementById('result-card').style.display  = 'none';
     document.getElementById('loading-card').style.display = 'block';
+    setLoadingStage(0);
+    if (loadingStageTimer) clearInterval(loadingStageTimer);
+    loadingStageTimer = setInterval(() => {
+      const current = Number(document.getElementById('loading-card').dataset.stage || 0);
+      if (current < 2) setLoadingStage(current + 1);
+    }, 6500);
     // reset progress bar animation
     const fill = document.querySelector('.progress-fill');
     fill.style.animation = 'none';
@@ -443,8 +526,28 @@
   }
 
   function showResult() {
+    if (loadingStageTimer) {
+      clearInterval(loadingStageTimer);
+      loadingStageTimer = null;
+    }
     document.getElementById('loading-card').style.display = 'none';
     document.getElementById('result-card').style.display  = 'block';
+  }
+
+  function setLoadingStage(stageIndex) {
+    const loadingCard = document.getElementById('loading-card');
+    const statusText = document.getElementById('loading-status-text');
+    loadingCard.dataset.stage = String(stageIndex);
+    statusText.textContent = loadingStageTexts[stageIndex] || loadingStageTexts[loadingStageTexts.length - 1];
+
+    document.querySelectorAll('.loading-stage').forEach((item, index) => {
+      item.classList.remove('active', 'done');
+      if (index < stageIndex) {
+        item.classList.add('done');
+      } else if (index === stageIndex) {
+        item.classList.add('active');
+      }
+    });
   }
 
   async function streamReport(payload) {
@@ -484,6 +587,7 @@
             const parsed = JSON.parse(data);
             if (parsed.error) throw new Error(parsed.error);
             if (parsed.text) {
+              setLoadingStage(3);
               fullText += parsed.text;
               renderReport(fullText);
             }
@@ -504,8 +608,31 @@
     }
   }
 
+  function sanitizeMathText(text) {
+    let cleaned = text;
+    while (cleaned.includes('\\frac')) {
+      const next = cleaned.replace(/\\frac\s*\{([^{}]+)\}\s*\{([^{}]+)\}/g, '($1)/($2)');
+      if (next === cleaned) break;
+      cleaned = next;
+    }
+    cleaned = cleaned
+      .replace(/\\text\s*\{([^{}]+)\}/g, '$1')
+      .replace(/\\quad/g, ' ')
+      .replace(/\\\[/g, '')
+      .replace(/\\\]/g, '')
+      .replace(/\\\(/g, '')
+      .replace(/\\\)/g, '')
+      .replace(/\[/g, '')
+      .replace(/\]/g, '')
+      .replace(/\{/g, '')
+      .replace(/\}/g, '')
+      .replace(/\s+/g, ' ')
+      .trim();
+    return cleaned;
+  }
+
   function renderReport(text) {
-    document.getElementById('report-content').innerHTML = marked.parse(text);
+    document.getElementById('report-content').innerHTML = marked.parse(sanitizeMathText(text));
   }
 
   // ── Reset ──
@@ -515,6 +642,10 @@
     document.getElementById('report-content').innerHTML  = '';
     document.getElementById('form-error').style.display  = 'none';
     document.getElementById('submit-btn').disabled       = false;
+    if (loadingStageTimer) {
+      clearInterval(loadingStageTimer);
+      loadingStageTimer = null;
+    }
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
