@@ -244,6 +244,15 @@
 
   // ── Render result ──────────────────────────────────
   function renderResult(data) {
+    // Grade warning
+    const warningBox = document.getElementById("grade-warning-box");
+    if (data.grade_warning) {
+      warningBox.textContent = data.grade_warning;
+      warningBox.style.display = "block";
+    } else {
+      warningBox.style.display = "none";
+    }
+
     // Module 1: start_from
     document.getElementById("m-start-from").textContent = data.start_from || "";
 

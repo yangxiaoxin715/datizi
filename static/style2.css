@@ -177,6 +177,17 @@ textarea:focus, input[type="text"]:focus {
 }
 .tips-dot.active { background: var(--orange-500); }
 
+/* ── Grade warning ── */
+.grade-warning-box {
+  background: #fffbeb; border: 1.5px solid #f59e0b;
+  border-radius: 12px; padding: 14px 18px;
+  margin-bottom: 16px; color: #92400e;
+  font-size: .9rem; line-height: 1.65;
+}
+.grade-warning-box::before {
+  content: "⚠️ "; font-size: 1rem;
+}
+
 /* ── Result page ── */
 .result-header { margin-bottom: 24px; }
 .result-header h2 { font-size: 1.4rem; font-weight: 800; color: var(--gray-900); margin-bottom: 6px; }
