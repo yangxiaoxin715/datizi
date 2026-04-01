@@ -28,6 +28,54 @@
   const btnBack = document.getElementById("btn-back");
   const btnCopy = document.getElementById("btn-copy");
 
+  // ── 讲题提示（等待期间轮播）─────────────────────────
+  const TIPS = [
+    "孩子说"是"不代表真的懂了，懂了的孩子能用自己的理解说出来。",
+    "孩子卡住时，不要重复同一个问题——退回一个更小的问题，重新建立基础。",
+    "孩子答对了之后，不要追问"你是怎么算的"。低年级孩子靠直觉，追问会让他们崩溃。",
+    "一次只问一件事，问完等孩子答完，再往下走。",
+    "孩子慌了之后，先停下来，不是继续往前讲。",
+    "讲之前先判断：孩子是没懂，还是懂了但说不出来？这两种处理方式完全不同。",
+  ];
+
+  let tipsIndex = 0;
+  let tipsTimer = null;
+  const tipsText = document.getElementById("tips-text");
+  const tipsDots = document.getElementById("tips-dots");
+
+  function initTipsDots() {
+    tipsDots.innerHTML = "";
+    TIPS.forEach((_, i) => {
+      const d = document.createElement("div");
+      d.className = "tips-dot" + (i === 0 ? " active" : "");
+      tipsDots.appendChild(d);
+    });
+  }
+
+  function showTip(index) {
+    const dots = tipsDots.querySelectorAll(".tips-dot");
+    tipsText.classList.add("fade");
+    setTimeout(() => {
+      tipsText.textContent = TIPS[index];
+      tipsText.classList.remove("fade");
+      dots.forEach((d, i) => d.classList.toggle("active", i === index));
+    }, 400);
+  }
+
+  function startTips() {
+    tipsIndex = 0;
+    initTipsDots();
+    tipsText.textContent = TIPS[0];
+    tipsTimer = setInterval(() => {
+      tipsIndex = (tipsIndex + 1) % TIPS.length;
+      showTip(tipsIndex);
+    }, 5000);
+  }
+
+  function stopTips() {
+    clearInterval(tipsTimer);
+  }
+
   // ── Progress bar helpers ───────────────────────────
   let estimatedMs = 35000; // 默认值，classify 后会更新
 
@@ -44,6 +92,7 @@
     progressFill.style.width = "0%";
     loadingBox.classList.add("visible");
     submitBtn.style.display = "none";
+    startTips();
 
     progressTimer = setInterval(() => {
       const elapsed = Date.now() - startTime;
@@ -70,6 +119,7 @@
 
   function finishProgress() {
     clearInterval(progressTimer);
+    stopTips();
     progressFill.style.width = "100%";
     loadingLabel.textContent = "讲题方案已生成 ✓";
     loadingSubLabel.textContent = "";
@@ -81,6 +131,7 @@
 
   function resetProgress() {
     clearInterval(progressTimer);
+    stopTips();
     loadingBox.classList.remove("visible");
     progressFill.style.width = "0%";
     submitBtn.style.display = "block";

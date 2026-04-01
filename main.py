@@ -550,18 +550,8 @@ HIGH_GRADES = {"四年级", "五年级", "六年级"}
 
 
 def classify_complexity(grade: str, question: str) -> tuple[str, int]:
-    """返回 (model, estimated_seconds)"""
-    is_high_grade = grade in HIGH_GRADES
-    is_long = len(question) > 60
-    has_complex_keyword = any(kw in question for kw in COMPLEX_KEYWORDS)
-
-    if is_high_grade and (is_long or has_complex_keyword):
-        return "r1", 35
-    if has_complex_keyword:
-        return "r1", 30
-    if is_high_grade and is_long:
-        return "r1", 25
-    return "v3", 8
+    """全部使用 R1，保证答案准确。返回 (model, estimated_seconds)"""
+    return "r1", 30
 
 
 @app.get("/v2", response_class=HTMLResponse)

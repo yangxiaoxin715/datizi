@@ -151,6 +151,32 @@ textarea:focus, input[type="text"]:focus {
   transition: width .6s ease;
 }
 
+/* ── 等待提示卡 ── */
+.tips-card {
+  margin-top: 20px; background: #fff;
+  border-radius: 12px; padding: 18px 20px;
+  text-align: left; box-shadow: var(--shadow);
+  min-height: 90px;
+}
+.tips-card-title {
+  font-size: .75rem; font-weight: 700; color: var(--orange-500);
+  letter-spacing: .06em; margin-bottom: 10px;
+}
+.tips-card-body {
+  font-size: .95rem; color: var(--gray-900); line-height: 1.7;
+  min-height: 48px;
+  transition: opacity .4s ease;
+}
+.tips-card-body.fade { opacity: 0; }
+.tips-dots {
+  display: flex; gap: 5px; margin-top: 12px; justify-content: center;
+}
+.tips-dot {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: var(--gray-200); transition: background .3s;
+}
+.tips-dot.active { background: var(--orange-500); }
+
 /* ── Result page ── */
 .result-header { margin-bottom: 24px; }
 .result-header h2 { font-size: 1.4rem; font-weight: 800; color: var(--gray-900); margin-bottom: 6px; }
