@@ -511,7 +511,7 @@ async def generate_v2(req: GenerateV2Request):
         return MOCK_DATA
 
     try:
-        async with httpx.AsyncClient(timeout=60.0) as client:
+        async with httpx.AsyncClient(timeout=120.0) as client:
             resp = await client.post(
                 "https://api.deepseek.com/chat/completions",
                 headers={
@@ -519,7 +519,7 @@ async def generate_v2(req: GenerateV2Request):
                     "Content-Type": "application/json",
                 },
                 json={
-                    "model": "deepseek-chat",
+                    "model": "deepseek-reasoner",
                     "messages": [
                         {"role": "system", "content": V2_SYSTEM_PROMPT},
                         {
@@ -529,9 +529,7 @@ async def generate_v2(req: GenerateV2Request):
                             ),
                         },
                     ],
-                    "temperature": 0.3,
-                    "max_tokens": 1200,
-                    "response_format": {"type": "json_object"},
+                    "max_tokens": 4000,
                 },
             )
         data = resp.json()
