@@ -3,6 +3,7 @@
 (function () {
   // ── State ──────────────────────────────────────────
   let selectedGrade = "";
+  let selectedSource = "";
   let lastResult = null;
   let progressTimer = null;
 
@@ -95,6 +96,16 @@
     });
   });
 
+  // ── Source selection ───────────────────────────────
+  const sourceButtons = document.querySelectorAll(".source-btn");
+  sourceButtons.forEach(btn => {
+    btn.addEventListener("click", () => {
+      sourceButtons.forEach(b => b.classList.remove("selected"));
+      btn.classList.add("selected");
+      selectedSource = btn.dataset.source;
+    });
+  });
+
   // ── Form submit ────────────────────────────────────
   submitBtn.addEventListener("click", async () => {
     // Validate
@@ -120,6 +131,7 @@
       question: questionInput.value.trim(),
       student_answer: studentInput.value.trim(),
       parent_note: parentInput.value.trim(),
+      source: selectedSource,
     };
 
     // Step 1: classify (instant, local rules on server)
@@ -236,7 +248,9 @@
   // ── Back button ────────────────────────────────────
   btnBack.addEventListener("click", () => {
     gradeButtons.forEach(b => b.classList.remove("selected"));
+    sourceButtons.forEach(b => b.classList.remove("selected"));
     selectedGrade = "";
+    selectedSource = "";
     questionInput.value = "";
     studentInput.value  = "";
     parentInput.value   = "";

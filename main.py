@@ -495,11 +495,12 @@ parent_traps（数组，2-3条）,
 three_steps: { say_it, write_it, draw_it }"""
 
 
-def build_v2_user_prompt(grade: str, question: str, student_answer: str, parent_note: str) -> str:
+def build_v2_user_prompt(grade: str, question: str, student_answer: str, parent_note: str, source: str) -> str:
+    source_line = f"\n【题目来源】\n{source}" if source else ""
     return f"""请根据下面信息，生成这道题的"家长讲题方案"。
 
 【孩子年级】
-{grade}
+{grade}{source_line}
 
 【题目】
 {question}
@@ -514,6 +515,8 @@ def build_v2_user_prompt(grade: str, question: str, student_answer: str, parent_
 - 输出要适合小学生家长阅读；
 - 不要写成长篇报告；
 - 要让家长有"我现在知道怎么讲了"的感觉；
+- 如果题目来源是"课外培训/竞赛班"，不受年级知识边界限制，给出最有效的讲题路径；
+- 如果题目来源是"课本/课堂作业"或"考试卷"，发现所需方法超出该年级范围时，在 grade_warning 字段给出提示；
 - 如果题目本身信息不足，请尽量指出并做最合理理解。"""
 
 
@@ -522,7 +525,8 @@ class GenerateV2Request(BaseModel):
     question: str
     student_answer: str = ""
     parent_note: str = ""
-    model: str = ""  # "v3" or "r1"; empty means auto-select
+    source: str = ""   # 课本/课堂作业 | 考试卷 | 课外培训/竞赛班 | 不清楚
+    model: str = ""    # "v3" or "r1"; empty means auto-select
 
 
 # 判断题目难度的本地规则（不消耗 API）
@@ -590,7 +594,7 @@ async def generate_v2(req: GenerateV2Request):
                 {
                     "role": "user",
                     "content": build_v2_user_prompt(
-                        req.grade, req.question, req.student_answer, req.parent_note
+                        req.grade, req.question, req.student_answer, req.parent_note, req.source
                     ),
                 },
             ],
