@@ -1,0 +1,186 @@
+/* 搭梯子 2.0 — style2.css */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --orange-500: #f97316;
+  --orange-600: #ea580c;
+  --orange-50:  #fff7ed;
+  --orange-100: #ffedd5;
+  --gray-50:  #f9fafb;
+  --gray-100: #f3f4f6;
+  --gray-200: #e5e7eb;
+  --gray-400: #9ca3af;
+  --gray-500: #6b7280;
+  --gray-700: #374151;
+  --gray-900: #111827;
+  --radius: 14px;
+  --shadow: 0 1px 3px rgba(0,0,0,.08), 0 4px 12px rgba(0,0,0,.06);
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC",
+               "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+  background: var(--gray-50);
+  color: var(--gray-900);
+  line-height: 1.65;
+  min-height: 100vh;
+}
+
+/* ── Header ── */
+.site-header {
+  background: linear-gradient(135deg, #92400e 0%, #c2410c 50%, #f97316 100%);
+  padding: 36px 20px 32px;
+  text-align: center;
+  color: #fff;
+}
+.header-icon { font-size: 2.2rem; margin-bottom: 8px; }
+.site-header h1 { font-size: 2rem; font-weight: 800; letter-spacing: .06em; margin-bottom: 6px; }
+.site-header .tagline { font-size: 1rem; opacity: .9; margin-bottom: 4px; }
+
+/* ── Layout ── */
+.container { max-width: 680px; margin: 0 auto; padding: 28px 16px 60px; }
+
+/* ── Card ── */
+.card {
+  background: #fff;
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 28px;
+  margin-bottom: 20px;
+}
+@media (max-width: 500px) { .card { padding: 20px 16px; } }
+
+/* ── Intro text ── */
+.intro-text { font-size: .95rem; color: var(--gray-700); line-height: 1.7; margin-bottom: 24px; }
+
+/* ── Form ── */
+.form-group { margin-bottom: 20px; }
+.form-label {
+  display: block; font-size: .875rem; font-weight: 600;
+  color: var(--gray-700); margin-bottom: 8px;
+}
+.required { color: var(--orange-500); margin-left: 2px; }
+
+/* Grade selector */
+.grade-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 8px; }
+@media (max-width: 500px) { .grade-grid { grid-template-columns: repeat(3, 1fr); } }
+
+.grade-btn {
+  padding: 9px 4px; border: 1.5px solid var(--gray-200);
+  border-radius: 8px; background: #fff; font-size: .875rem;
+  color: var(--gray-700); cursor: pointer; transition: all .15s;
+  text-align: center;
+}
+.grade-btn:hover { border-color: var(--orange-500); color: var(--orange-500); }
+.grade-btn.selected {
+  background: var(--orange-500); border-color: var(--orange-500);
+  color: #fff; font-weight: 600;
+}
+
+/* Inputs */
+textarea, input[type="text"] {
+  width: 100%; border: 1.5px solid var(--gray-200); border-radius: 10px;
+  padding: 12px 14px; font-size: .95rem; font-family: inherit;
+  color: var(--gray-900); resize: vertical; transition: border-color .15s;
+  background: #fff;
+}
+textarea:focus, input[type="text"]:focus {
+  outline: none; border-color: var(--orange-500);
+  box-shadow: 0 0 0 3px rgba(249,115,22,.12);
+}
+
+/* Optional label */
+.optional-tag {
+  font-size: .78rem; font-weight: 400; color: var(--gray-400);
+  margin-left: 4px;
+}
+
+/* ── Validation error ── */
+.field-error { font-size: .82rem; color: #ef4444; margin-top: 6px; display: none; }
+.field-error.visible { display: block; }
+
+/* ── Submit button ── */
+.btn-primary {
+  display: block; width: 100%; padding: 15px;
+  background: var(--orange-500); color: #fff;
+  border: none; border-radius: 12px; font-size: 1.05rem; font-weight: 700;
+  cursor: pointer; transition: background .15s, transform .1s;
+  letter-spacing: .04em;
+}
+.btn-primary:hover:not(:disabled) { background: var(--orange-600); transform: translateY(-1px); }
+.btn-primary:disabled { opacity: .65; cursor: not-allowed; transform: none; }
+
+/* ── Result page ── */
+.result-header { margin-bottom: 24px; }
+.result-header h2 { font-size: 1.4rem; font-weight: 800; color: var(--gray-900); margin-bottom: 6px; }
+.result-header p { font-size: .9rem; color: var(--gray-500); }
+
+/* Module card */
+.module-card {
+  background: #fff; border-radius: var(--radius); box-shadow: var(--shadow);
+  padding: 22px 24px; margin-bottom: 16px;
+  border-left: 4px solid var(--orange-500);
+}
+@media (max-width: 500px) { .module-card { padding: 16px; } }
+
+.module-label {
+  font-size: .78rem; font-weight: 700; color: var(--orange-500);
+  text-transform: uppercase; letter-spacing: .08em; margin-bottom: 6px;
+}
+.module-title { font-size: 1rem; font-weight: 700; color: var(--gray-900); margin-bottom: 12px; }
+.module-body { font-size: .95rem; color: var(--gray-700); line-height: 1.7; }
+
+/* stuck_points list */
+.stuck-list { list-style: none; padding: 0; }
+.stuck-list li {
+  padding: 8px 12px; background: var(--orange-50);
+  border-radius: 8px; margin-bottom: 8px;
+  font-size: .93rem; color: var(--gray-700); line-height: 1.6;
+}
+
+/* direct_script box */
+.script-box {
+  background: var(--orange-50); border-radius: 10px; padding: 16px;
+  font-size: .95rem; color: var(--gray-900); line-height: 1.75;
+  border-left: 3px solid var(--orange-500); white-space: pre-wrap;
+}
+
+/* three_steps */
+.three-steps { display: flex; flex-direction: column; gap: 12px; }
+.step-item { display: flex; gap: 12px; align-items: flex-start; }
+.step-icon {
+  flex-shrink: 0; width: 28px; height: 28px; border-radius: 50%;
+  background: var(--orange-500); color: #fff; font-size: .78rem; font-weight: 700;
+  display: flex; align-items: center; justify-content: center; margin-top: 1px;
+}
+.step-content { flex: 1; }
+.step-label { font-size: .82rem; font-weight: 700; color: var(--orange-600); margin-bottom: 3px; }
+.step-text { font-size: .93rem; color: var(--gray-700); line-height: 1.6; }
+
+/* ── Action buttons ── */
+.action-row { display: flex; gap: 12px; margin-top: 24px; }
+.btn-secondary {
+  flex: 1; padding: 13px; border: 1.5px solid var(--gray-200);
+  border-radius: 12px; background: #fff; font-size: .95rem; font-weight: 600;
+  color: var(--gray-700); cursor: pointer; transition: all .15s;
+}
+.btn-secondary:hover { border-color: var(--orange-500); color: var(--orange-500); }
+.btn-copy {
+  flex: 1; padding: 13px; border: 1.5px solid var(--orange-500);
+  border-radius: 12px; background: #fff; font-size: .95rem; font-weight: 600;
+  color: var(--orange-500); cursor: pointer; transition: all .15s;
+}
+.btn-copy:hover { background: var(--orange-50); }
+@media (max-width: 420px) { .action-row { flex-direction: column; } }
+
+/* ── Error banner ── */
+.error-banner {
+  background: #fef2f2; border: 1px solid #fecaca; border-radius: 10px;
+  padding: 14px 16px; color: #b91c1c; font-size: .9rem;
+  margin-bottom: 16px; display: none;
+}
+.error-banner.visible { display: block; }
+
+/* ── View toggle ── */
+.view { display: none; }
+.view.active { display: block; }

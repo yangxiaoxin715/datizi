@@ -420,3 +420,134 @@ async def generate(req: GenerateRequest):
             yield f"data: {json.dumps({'error': str(e)}, ensure_ascii=False)}\n\n"
 
     return StreamingResponse(stream(), media_type="text/event-stream")
+
+
+# ── 搭梯子 2.0 ──────────────────────────────────────────────
+
+MOCK_DATA = {
+    "success": True,
+    "data": {
+        "start_from": "先和孩子确认这道题最后要求什么，再引导他理解「6天完成」表示一天只完成一部分。",
+        "stuck_points": [
+            "孩子最容易卡在：不理解「6天完成」为什么能转成「一天完成多少」。",
+            "也容易把「合作」误以为是把6和8直接相加。",
+        ],
+        "fallback_step": "如果孩子没懂「效率」，先退回去讲：整项工程看成一整块，一天只做其中的一部分。",
+        "direct_script": "我们先不急着算答案。先看这题最后要求什么。想知道几天完成，就要先知道他们一天一共做多少，对不对？",
+        "three_steps": {
+            "say_it": "先让孩子说清：这题最后求什么，为什么第一步要先求一天完成多少。",
+            "write_it": "让孩子写出甲一天完成1/6，乙一天完成1/8，再写合作一天完成多少。",
+            "draw_it": "如果还是不懂，就把整项工程画成一条，再标出一天做的部分。",
+        },
+    },
+}
+
+V2_SYSTEM_PROMPT = """你是一个"小学生家长讲题急救助手"。
+
+你的任务不是生成长篇解析，也不是只给答案，而是在家长输入一道小学数学题后，帮助家长立刻知道"这道题现在该怎么讲"。
+
+请始终围绕以下目标输出：
+1. 告诉家长这题先从哪里讲；
+2. 告诉家长孩子最容易卡在哪；
+3. 告诉家长如果孩子没懂，应该退回哪一步；
+4. 给家长一小段可以直接照着说的话；
+5. 用"先说出来、再写出来、必要时画出来"的方式，帮助家长判断孩子有没有真正听懂。
+
+请严格遵守：
+- 输出对象首先是家长；
+- 必须根据孩子当前年级决定讲法，不能调用高于该年级的背景知识；
+- 不要长篇理论，不要像老师教案；
+- 要短、准、能立刻用；
+- 不要只给答案，要给"讲法"和"退路"；
+- 优先解决"现在怎么办"，而不是追求面面俱到。
+
+请严格输出 JSON，不要输出额外解释，不要输出 markdown 代码块标记。
+JSON 字段必须包含：
+start_from,
+stuck_points（数组，1-2条）,
+fallback_step,
+direct_script,
+three_steps: { say_it, write_it, draw_it }"""
+
+
+def build_v2_user_prompt(grade: str, question: str, student_answer: str, parent_note: str) -> str:
+    return f"""请根据下面信息，生成这道题的"家长讲题方案"。
+
+【孩子年级】
+{grade}
+
+【题目】
+{question}
+
+【孩子原答案（可选）】
+{student_answer or "未填写"}
+
+【家长补充说明（可选）】
+{parent_note or "未填写"}
+
+要求：
+- 输出要适合小学生家长阅读；
+- 不要写成长篇报告；
+- 要让家长有"我现在知道怎么讲了"的感觉；
+- 如果题目本身信息不足，请尽量指出并做最合理理解。"""
+
+
+class GenerateV2Request(BaseModel):
+    grade: str
+    question: str
+    student_answer: str = ""
+    parent_note: str = ""
+
+
+@app.get("/v2", response_class=HTMLResponse)
+async def index_v2(request: Request):
+    return templates.TemplateResponse("index2.html", {"request": request})
+
+
+@app.post("/api/v2/generate")
+async def generate_v2(req: GenerateV2Request):
+    # Mock mode: if no API key configured, return mock data for UI testing
+    if not DEEPSEEK_API_KEY:
+        return MOCK_DATA
+
+    try:
+        async with httpx.AsyncClient(timeout=60.0) as client:
+            resp = await client.post(
+                "https://api.deepseek.com/chat/completions",
+                headers={
+                    "Authorization": f"Bearer {DEEPSEEK_API_KEY}",
+                    "Content-Type": "application/json",
+                },
+                json={
+                    "model": "deepseek-chat",
+                    "messages": [
+                        {"role": "system", "content": V2_SYSTEM_PROMPT},
+                        {
+                            "role": "user",
+                            "content": build_v2_user_prompt(
+                                req.grade, req.question, req.student_answer, req.parent_note
+                            ),
+                        },
+                    ],
+                    "temperature": 0.3,
+                    "max_tokens": 1200,
+                    "response_format": {"type": "json_object"},
+                },
+            )
+        data = resp.json()
+        raw_content = data["choices"][0]["message"]["content"]
+
+        # Parse JSON from model response
+        result = extract_json_object(raw_content)
+
+        # Validate required fields; fill defaults if missing
+        result.setdefault("start_from", "")
+        result.setdefault("stuck_points", [])
+        result.setdefault("fallback_step", "")
+        result.setdefault("direct_script", "")
+        result.setdefault("three_steps", {"say_it": "", "write_it": "", "draw_it": ""})
+
+        return {"success": True, "data": result}
+
+    except Exception as e:
+        return {"success": False, "error": f"生成失败，请稍后再试。({str(e)})"}

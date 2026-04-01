@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>搭梯子 — 帮小学生家长把数学错题讲明白</title>
+  <link rel="stylesheet" href="/static/style2.css">
+</head>
+<body>
+
+<header class="site-header">
+  <div class="header-icon">🪜</div>
+  <h1>搭梯子</h1>
+  <p class="tagline">帮小学生家长把数学错题讲明白</p>
+</header>
+
+<!-- ── INPUT VIEW ── -->
+<div id="view-input" class="view">
+  <div class="container">
+    <div class="card">
+      <p class="intro-text">
+        当孩子来问这道题怎么做时，家长能借助《搭梯子》，像金牌名师一样，一步一步讲给孩子听，帮助孩子真正搞明白。
+      </p>
+
+      <!-- Grade -->
+      <div class="form-group">
+        <label class="form-label">孩子年级 <span class="required">*</span></label>
+        <div class="grade-grid">
+          <button class="grade-btn" data-grade="一年级">一年级</button>
+          <button class="grade-btn" data-grade="二年级">二年级</button>
+          <button class="grade-btn" data-grade="三年级">三年级</button>
+          <button class="grade-btn" data-grade="四年级">四年级</button>
+          <button class="grade-btn" data-grade="五年级">五年级</button>
+          <button class="grade-btn" data-grade="六年级">六年级</button>
+        </div>
+        <p id="grade-error" class="field-error">请选择孩子年级</p>
+      </div>
+
+      <!-- Question -->
+      <div class="form-group">
+        <label class="form-label" for="question">题目内容 <span class="required">*</span></label>
+        <textarea
+          id="question"
+          rows="5"
+          placeholder="请输入一道孩子不会的数学题，例如：甲单独做一项工程，6天完成；乙单独做一项工程，8天完成。两人合作，几天完成？"
+        ></textarea>
+        <p id="question-error" class="field-error">请先输入题目内容</p>
+      </div>
+
+      <!-- Student answer (optional) -->
+      <div class="form-group">
+        <label class="form-label" for="student-answer">
+          孩子原答案 <span class="optional-tag">（可选）</span>
+        </label>
+        <textarea id="student-answer" rows="2" placeholder="例如：14天"></textarea>
+      </div>
+
+      <!-- Parent note (optional) -->
+      <div class="form-group">
+        <label class="form-label" for="parent-note">
+          家长补充说明 <span class="optional-tag">（可选）</span>
+        </label>
+        <textarea
+          id="parent-note"
+          rows="3"
+          placeholder="例如：孩子总是不知道第一步该怎么想 / 我讲几遍他还是不懂 / 他不明白为什么这样列式"
+        ></textarea>
+      </div>
+
+      <!-- Error banner -->
+      <div id="error-banner" class="error-banner"></div>
+
+      <!-- Submit -->
+      <button id="submit-btn" class="btn-primary">生成讲题方案</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── RESULT VIEW ── -->
+<div id="view-result" class="view">
+  <div class="container">
+    <div class="result-header">
+      <h2>这道题，你现在可以这样讲</h2>
+      <p>你现在不用临时硬讲，按这个顺序讲，更容易让孩子听懂。</p>
+    </div>
+
+    <div id="result-container">
+
+      <!-- Module 1 -->
+      <div class="module-card">
+        <div class="module-label">模块一</div>
+        <div class="module-title">这题先讲什么</div>
+        <div class="module-body" id="m-start-from"></div>
+      </div>
+
+      <!-- Module 2 -->
+      <div class="module-card">
+        <div class="module-label">模块二</div>
+        <div class="module-title">孩子最容易卡在哪</div>
+        <ul class="stuck-list" id="m-stuck-list"></ul>
+      </div>
+
+      <!-- Module 3 -->
+      <div class="module-card">
+        <div class="module-label">模块三</div>
+        <div class="module-title">如果孩子没懂，退回哪一步</div>
+        <div class="module-body" id="m-fallback"></div>
+      </div>
+
+      <!-- Module 4 -->
+      <div class="module-card">
+        <div class="module-label">模块四</div>
+        <div class="module-title">你现在可以直接这样说</div>
+        <div class="script-box" id="m-script"></div>
+      </div>
+
+      <!-- Module 5 -->
+      <div class="module-card">
+        <div class="module-label">模块五</div>
+        <div class="module-title">讲明白三步</div>
+        <div class="three-steps">
+          <div class="step-item">
+            <div class="step-icon">说</div>
+            <div class="step-content">
+              <div class="step-label">先说出来</div>
+              <div class="step-text" id="m-say-it"></div>
+            </div>
+          </div>
+          <div class="step-item">
+            <div class="step-icon">写</div>
+            <div class="step-content">
+              <div class="step-label">再写出来</div>
+              <div class="step-text" id="m-write-it"></div>
+            </div>
+          </div>
+          <div class="step-item">
+            <div class="step-icon">画</div>
+            <div class="step-content">
+              <div class="step-label">必要时画出来</div>
+              <div class="step-text" id="m-draw-it"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /result-container -->
+
+    <!-- Action buttons -->
+    <div class="action-row">
+      <button id="btn-back" class="btn-secondary">再分析一道题</button>
+      <button id="btn-copy" class="btn-copy">复制这份讲题方案</button>
+    </div>
+
+  </div>
+</div><!-- /view-result -->
+
+<script src="/static/app2.js"></script>
+</body>
+</html>
