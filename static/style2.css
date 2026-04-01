@@ -170,6 +170,42 @@ textarea:focus, input[type="text"]:focus {
   border-left: 3px solid var(--orange-500); white-space: pre-wrap;
 }
 
+/* key_scripts — three conversation nodes */
+.key-scripts { display: flex; flex-direction: column; gap: 12px; }
+.script-node-label {
+  font-size: .78rem; font-weight: 700; color: var(--orange-600);
+  margin-bottom: 6px; letter-spacing: .04em;
+}
+
+/* wrong answer responses */
+.wrong-answer-item { margin-bottom: 14px; }
+.wrong-answer-item:last-child { margin-bottom: 0; }
+.child-says {
+  font-size: .82rem; color: var(--gray-500); margin-bottom: 6px;
+}
+.child-says strong { color: var(--gray-700); }
+.parent-says {
+  background: var(--orange-50); border-left: 3px solid var(--orange-500);
+  border-radius: 0 8px 8px 0; padding: 10px 14px;
+  font-size: .93rem; color: var(--gray-900); line-height: 1.65;
+}
+
+/* parent traps — warning style */
+.module-card--warning { border-left-color: #f59e0b; }
+.module-label--warning { color: #d97706; }
+.trap-list { list-style: none; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.trap-list li {
+  display: flex; gap: 10px; align-items: flex-start;
+  font-size: .93rem; color: var(--gray-700); line-height: 1.6;
+}
+.trap-list li::before {
+  content: "×"; flex-shrink: 0; width: 20px; height: 20px;
+  background: #fef3c7; color: #d97706; border-radius: 50%;
+  font-size: .75rem; font-weight: 800;
+  display: flex; align-items: center; justify-content: center;
+  margin-top: 1px;
+}
+
 /* three_steps */
 .three-steps { display: flex; flex-direction: column; gap: 12px; }
 .step-item { display: flex; gap: 12px; align-items: flex-start; }

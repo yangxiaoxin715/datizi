@@ -174,6 +174,11 @@
     }
   });
 
+  // ── Helpers ────────────────────────────────────────
+  function escapeHtml(str) {
+    return str.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+  }
+
   // ── Render result ──────────────────────────────────
   function renderResult(data) {
     // Module 1: start_from
@@ -192,10 +197,36 @@
     // Module 3: fallback_step
     document.getElementById("m-fallback").textContent = data.fallback_step || "";
 
-    // Module 4: direct_script
-    document.getElementById("m-script").textContent = data.direct_script || "";
+    // Module 4: key_scripts
+    const ks = data.key_scripts || {};
+    document.getElementById("m-script-open").textContent   = ks.open        || "";
+    document.getElementById("m-script-stuck").textContent  = ks.when_stuck  || "";
+    document.getElementById("m-script-verify").textContent = ks.verify       || "";
 
-    // Module 5: three_steps
+    // Module 5: wrong_answer_responses
+    const warBox = document.getElementById("m-wrong-answers");
+    warBox.innerHTML = "";
+    const wars = Array.isArray(data.wrong_answer_responses) ? data.wrong_answer_responses : [];
+    wars.forEach(item => {
+      const div = document.createElement("div");
+      div.className = "wrong-answer-item";
+      div.innerHTML =
+        `<div class="child-says">孩子说：<strong>${escapeHtml(item.child_says || "")}</strong></div>` +
+        `<div class="parent-says">${escapeHtml(item.parent_says || "")}</div>`;
+      warBox.appendChild(div);
+    });
+
+    // Module 6: parent_traps
+    const trapList = document.getElementById("m-traps");
+    trapList.innerHTML = "";
+    const traps = Array.isArray(data.parent_traps) ? data.parent_traps : [];
+    traps.forEach(t => {
+      const li = document.createElement("li");
+      li.textContent = t;
+      trapList.appendChild(li);
+    });
+
+    // Module 7: three_steps
     const ts = data.three_steps || {};
     document.getElementById("m-say-it").textContent   = ts.say_it   || "";
     document.getElementById("m-write-it").textContent = ts.write_it || "";
@@ -221,17 +252,26 @@
     if (!lastResult) return;
     const d  = lastResult;
     const ts = d.three_steps || {};
+    const ks = d.key_scripts || {};
     const stuckText = Array.isArray(d.stuck_points)
       ? d.stuck_points.map(p => "• " + p).join("\n")
       : "• " + d.stuck_points;
+    const warText = Array.isArray(d.wrong_answer_responses)
+      ? d.wrong_answer_responses.map(w => "孩子说：" + w.child_says + "\n你说：" + w.parent_says).join("\n\n")
+      : "";
+    const trapText = Array.isArray(d.parent_traps)
+      ? d.parent_traps.map(t => "× " + t).join("\n")
+      : "";
 
     const text = [
       "【这题先讲什么】\n" + d.start_from,
       "【孩子最容易卡在哪】\n" + stuckText,
       "【如果孩子没懂，退回哪一步】\n" + d.fallback_step,
-      "【你现在可以直接这样说】\n" + d.direct_script,
+      "【你现在可以直接这样说】\n开口第一句：" + ks.open + "\n孩子卡住时：" + ks.when_stuck + "\n检验听懂了没：" + ks.verify,
+      warText ? "【当孩子这样说，你这样接】\n" + warText : "",
+      trapText ? "【这样说会让孩子更乱】\n" + trapText : "",
       "【讲明白三步】\n先说出来：" + ts.say_it + "\n再写出来：" + ts.write_it + "\n必要时画出来：" + ts.draw_it,
-    ].join("\n\n");
+    ].filter(Boolean).join("\n\n");
 
     try {
       await navigator.clipboard.writeText(text);

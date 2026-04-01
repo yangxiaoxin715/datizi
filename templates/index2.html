@@ -120,12 +120,39 @@
       <div class="module-card">
         <div class="module-label">模块四</div>
         <div class="module-title">你现在可以直接这样说</div>
-        <div class="script-box" id="m-script"></div>
+        <div class="key-scripts">
+          <div class="script-node">
+            <div class="script-node-label">开口第一句</div>
+            <div class="script-box" id="m-script-open"></div>
+          </div>
+          <div class="script-node">
+            <div class="script-node-label">孩子卡住时</div>
+            <div class="script-box" id="m-script-stuck"></div>
+          </div>
+          <div class="script-node">
+            <div class="script-node-label">检验听懂了没</div>
+            <div class="script-box" id="m-script-verify"></div>
+          </div>
+        </div>
       </div>
 
-      <!-- Module 5 -->
+      <!-- Module 5: wrong answer responses -->
       <div class="module-card">
         <div class="module-label">模块五</div>
+        <div class="module-title">当孩子这样说，你这样接</div>
+        <div id="m-wrong-answers"></div>
+      </div>
+
+      <!-- Module 6: parent traps -->
+      <div class="module-card module-card--warning">
+        <div class="module-label module-label--warning">模块六</div>
+        <div class="module-title">这样说会让孩子更乱</div>
+        <ul class="trap-list" id="m-traps"></ul>
+      </div>
+
+      <!-- Module 7 -->
+      <div class="module-card">
+        <div class="module-label">模块七</div>
         <div class="module-title">讲明白三步</div>
         <div class="three-steps">
           <div class="step-item">
