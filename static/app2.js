@@ -160,7 +160,14 @@
 
     } catch (err) {
       resetProgress();
-      errorBanner.textContent = err.message || "生成失败，请稍后再试。";
+      // 不把浏览器底层英文报错直接展示给用户
+      const isNetworkErr = !err.message || err.message === "Failed to fetch"
+        || err.message.toLowerCase().includes("network")
+        || err.message.toLowerCase().includes("pattern")
+        || err.message.toLowerCase().includes("load");
+      errorBanner.textContent = isNetworkErr
+        ? "网络连接出了点问题，请重新点一次「生成讲题方案」。"
+        : (err.message || "生成失败，请稍后再试。");
       errorBanner.classList.add("visible");
     } finally {
       submitBtn.disabled = false;
