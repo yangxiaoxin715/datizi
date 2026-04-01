@@ -28,17 +28,17 @@
   const btnCopy = document.getElementById("btn-copy");
 
   // ── Progress bar helpers ───────────────────────────
-  // 预估 R1 需要 ~40 秒；进度条用缓动：前半段快，后半段慢，最多到 90%
-  const ESTIMATED_MS = 40000;
+  let estimatedMs = 35000; // 默认值，classify 后会更新
+
   const PHASES = [
-    { label: "正在理解这道题…",     until: 0.15 },
-    { label: "分析孩子的卡点…",     until: 0.40 },
-    { label: "整理讲题思路…",       until: 0.65 },
-    { label: "生成讲题方案中…",     until: 0.85 },
-    { label: "快好了，稍等一下…",   until: 0.90 },
+    { label: "正在理解这道题…",   until: 0.20 },
+    { label: "分析孩子的卡点…",   until: 0.45 },
+    { label: "整理讲题思路…",     until: 0.70 },
+    { label: "生成讲题方案中…",   until: 1.00 },
   ];
 
-  function startProgress() {
+  function startProgress(estimatedSeconds) {
+    estimatedMs = estimatedSeconds * 1000;
     const startTime = Date.now();
     progressFill.style.width = "0%";
     loadingBox.classList.add("visible");
@@ -46,21 +46,23 @@
 
     progressTimer = setInterval(() => {
       const elapsed = Date.now() - startTime;
-      // 缓动：ratio 越大增长越慢，上限 90%
-      const ratio = Math.min(elapsed / ESTIMATED_MS, 1);
-      const pct = Math.min(90, Math.round(Math.sqrt(ratio) * 90));
+      const ratio = Math.min(elapsed / estimatedMs, 1);
+      // 缓动到最多 88%，留给实际完成时跳 100%
+      const pct = Math.min(88, Math.round(Math.sqrt(ratio) * 88));
       progressFill.style.width = pct + "%";
 
-      // 阶段文案
+      // 阶段文案（不再出现"快好了"）
       const phase = PHASES.find(p => ratio <= p.until) || PHASES[PHASES.length - 1];
       loadingLabel.textContent = phase.label;
 
-      // 倒计时
-      const remaining = Math.max(0, Math.round((ESTIMATED_MS - elapsed) / 1000));
-      if (remaining > 0) {
+      // 倒计时：有剩余时显示秒数，超出预估则只说"还在生成中…"
+      const remaining = Math.round((estimatedMs - elapsed) / 1000);
+      if (remaining > 3) {
         loadingSubLabel.textContent = "预计还需 " + remaining + " 秒";
+      } else if (remaining > 0) {
+        loadingSubLabel.textContent = "马上就好…";
       } else {
-        loadingSubLabel.textContent = "快好了，请再等一下…";
+        loadingSubLabel.textContent = "还在生成中，再等一下…";
       }
     }, 500);
   }
@@ -112,18 +114,37 @@
     // Loading state
     submitBtn.disabled = true;
     errorBanner.classList.remove("visible");
-    startProgress();
+
+    const payload = {
+      grade: selectedGrade,
+      question: questionInput.value.trim(),
+      student_answer: studentInput.value.trim(),
+      parent_note: parentInput.value.trim(),
+    };
+
+    // Step 1: classify (instant, local rules on server)
+    let chosenModel = "";
+    let estimatedSeconds = 35;
+    try {
+      const cr = await fetch("/api/v2/classify", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      const cj = await cr.json();
+      chosenModel = cj.model || "";
+      estimatedSeconds = cj.estimated_seconds || 35;
+    } catch (_) {
+      // classify 失败不影响主流程，用默认值
+    }
+
+    startProgress(estimatedSeconds);
 
     try {
       const resp = await fetch("/api/v2/generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          grade: selectedGrade,
-          question: questionInput.value.trim(),
-          student_answer: studentInput.value.trim(),
-          parent_note: parentInput.value.trim(),
-        }),
+        body: JSON.stringify({ ...payload, model: chosenModel }),
       });
 
       const json = await resp.json();

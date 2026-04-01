@@ -504,11 +504,44 @@ class GenerateV2Request(BaseModel):
     question: str
     student_answer: str = ""
     parent_note: str = ""
+    model: str = ""  # "v3" or "r1"; empty means auto-select
+
+
+# 判断题目难度的本地规则（不消耗 API）
+COMPLEX_KEYWORDS = {
+    "工程", "效率", "速度", "路程", "追及", "相遇", "分数", "比例", "百分",
+    "利润", "折扣", "面积", "体积", "周长", "方程", "倍数", "公倍", "公因",
+    "植树", "盈亏", "鸡兔", "年龄", "流水", "顺流", "逆流", "掉头", "往返",
+    "循环", "规律", "等差", "数列", "排列", "组合", "概率",
+}
+HIGH_GRADES = {"四年级", "五年级", "六年级"}
+
+
+def classify_complexity(grade: str, question: str) -> tuple[str, int]:
+    """返回 (model, estimated_seconds)"""
+    is_high_grade = grade in HIGH_GRADES
+    is_long = len(question) > 60
+    has_complex_keyword = any(kw in question for kw in COMPLEX_KEYWORDS)
+
+    if is_high_grade and (is_long or has_complex_keyword):
+        return "r1", 35
+    if has_complex_keyword:
+        return "r1", 30
+    if is_high_grade and is_long:
+        return "r1", 25
+    return "v3", 8
 
 
 @app.get("/v2", response_class=HTMLResponse)
 async def index_v2(request: Request):
     return templates.TemplateResponse("index2.html", {"request": request})
+
+
+@app.post("/api/v2/classify")
+async def classify_v2(req: GenerateV2Request):
+    """快速返回模型选择和预估时间，前端用于初始化进度条。"""
+    model, estimated_seconds = classify_complexity(req.grade, req.question)
+    return {"model": model, "estimated_seconds": estimated_seconds}
 
 
 @app.post("/api/v2/generate")
@@ -517,35 +550,52 @@ async def generate_v2(req: GenerateV2Request):
     if not DEEPSEEK_API_KEY:
         return MOCK_DATA
 
+    # 选择模型：前端可传 model 字段，否则自动判断
+    chosen_model, timeout_s = {
+        "v3": ("deepseek-chat", 30),
+        "r1": ("deepseek-reasoner", 120),
+    }.get(req.model, ("deepseek-chat", 30))
+
+    # 如果前端没传 model，用本地规则自动判断
+    if not req.model:
+        auto_model, _ = classify_complexity(req.grade, req.question)
+        chosen_model, timeout_s = {
+            "v3": ("deepseek-chat", 30),
+            "r1": ("deepseek-reasoner", 120),
+        }[auto_model]
+
     try:
-        async with httpx.AsyncClient(timeout=120.0) as client:
+        api_params: dict = {
+            "model": chosen_model,
+            "messages": [
+                {"role": "system", "content": V2_SYSTEM_PROMPT},
+                {
+                    "role": "user",
+                    "content": build_v2_user_prompt(
+                        req.grade, req.question, req.student_answer, req.parent_note
+                    ),
+                },
+            ],
+            "max_tokens": 2000 if chosen_model == "deepseek-chat" else 4000,
+        }
+        # deepseek-chat 支持 json_object 格式，R1 不支持
+        if chosen_model == "deepseek-chat":
+            api_params["response_format"] = {"type": "json_object"}
+            api_params["temperature"] = 0.3
+
+        async with httpx.AsyncClient(timeout=float(timeout_s)) as client:
             resp = await client.post(
                 "https://api.deepseek.com/chat/completions",
                 headers={
                     "Authorization": f"Bearer {DEEPSEEK_API_KEY}",
                     "Content-Type": "application/json",
                 },
-                json={
-                    "model": "deepseek-reasoner",
-                    "messages": [
-                        {"role": "system", "content": V2_SYSTEM_PROMPT},
-                        {
-                            "role": "user",
-                            "content": build_v2_user_prompt(
-                                req.grade, req.question, req.student_answer, req.parent_note
-                            ),
-                        },
-                    ],
-                    "max_tokens": 4000,
-                },
+                json=api_params,
             )
         data = resp.json()
         raw_content = data["choices"][0]["message"]["content"]
 
-        # Parse JSON from model response
         result = extract_json_object(raw_content)
-
-        # Validate required fields; fill defaults if missing
         result.setdefault("start_from", "")
         result.setdefault("stuck_points", [])
         result.setdefault("fallback_step", "")
