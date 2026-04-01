@@ -4,6 +4,7 @@
   // ── State ──────────────────────────────────────────
   let selectedGrade = "";
   let lastResult = null;
+  let progressTimer = null;
 
   // ── DOM refs ───────────────────────────────────────
   const viewInput  = document.getElementById("view-input");
@@ -18,8 +19,69 @@
   const questionError = document.getElementById("question-error");
   const errorBanner   = document.getElementById("error-banner");
 
+  const loadingBox     = document.getElementById("loading-box");
+  const loadingLabel   = document.getElementById("loading-label");
+  const progressFill   = document.getElementById("progress-fill");
+  const loadingSubLabel = document.getElementById("loading-sublabel");
+
   const btnBack = document.getElementById("btn-back");
   const btnCopy = document.getElementById("btn-copy");
+
+  // ── Progress bar helpers ───────────────────────────
+  // 预估 R1 需要 ~40 秒；进度条用缓动：前半段快，后半段慢，最多到 90%
+  const ESTIMATED_MS = 40000;
+  const PHASES = [
+    { label: "正在理解这道题…",     until: 0.15 },
+    { label: "分析孩子的卡点…",     until: 0.40 },
+    { label: "整理讲题思路…",       until: 0.65 },
+    { label: "生成讲题方案中…",     until: 0.85 },
+    { label: "快好了，稍等一下…",   until: 0.90 },
+  ];
+
+  function startProgress() {
+    const startTime = Date.now();
+    progressFill.style.width = "0%";
+    loadingBox.classList.add("visible");
+    submitBtn.style.display = "none";
+
+    progressTimer = setInterval(() => {
+      const elapsed = Date.now() - startTime;
+      // 缓动：ratio 越大增长越慢，上限 90%
+      const ratio = Math.min(elapsed / ESTIMATED_MS, 1);
+      const pct = Math.min(90, Math.round(Math.sqrt(ratio) * 90));
+      progressFill.style.width = pct + "%";
+
+      // 阶段文案
+      const phase = PHASES.find(p => ratio <= p.until) || PHASES[PHASES.length - 1];
+      loadingLabel.textContent = phase.label;
+
+      // 倒计时
+      const remaining = Math.max(0, Math.round((ESTIMATED_MS - elapsed) / 1000));
+      if (remaining > 0) {
+        loadingSubLabel.textContent = "预计还需 " + remaining + " 秒";
+      } else {
+        loadingSubLabel.textContent = "快好了，请再等一下…";
+      }
+    }, 500);
+  }
+
+  function finishProgress() {
+    clearInterval(progressTimer);
+    progressFill.style.width = "100%";
+    loadingLabel.textContent = "讲题方案已生成 ✓";
+    loadingSubLabel.textContent = "";
+    setTimeout(() => {
+      loadingBox.classList.remove("visible");
+      submitBtn.style.display = "block";
+    }, 400);
+  }
+
+  function resetProgress() {
+    clearInterval(progressTimer);
+    loadingBox.classList.remove("visible");
+    progressFill.style.width = "0%";
+    submitBtn.style.display = "block";
+  }
 
   // ── Grade selection ────────────────────────────────
   gradeButtons.forEach(btn => {
@@ -49,8 +111,8 @@
 
     // Loading state
     submitBtn.disabled = true;
-    submitBtn.textContent = "马不停蹄生成中…";
     errorBanner.classList.remove("visible");
+    startProgress();
 
     try {
       const resp = await fetch("/api/v2/generate", {
@@ -71,15 +133,16 @@
       }
 
       lastResult = json.data;
+      finishProgress();
       renderResult(json.data);
-      showView("result");
+      setTimeout(() => showView("result"), 450);
 
     } catch (err) {
+      resetProgress();
       errorBanner.textContent = err.message || "生成失败，请稍后再试。";
       errorBanner.classList.add("visible");
     } finally {
       submitBtn.disabled = false;
-      submitBtn.textContent = "生成讲题方案";
     }
   });
 
@@ -121,6 +184,7 @@
     gradeError.classList.remove("visible");
     questionError.classList.remove("visible");
     errorBanner.classList.remove("visible");
+    resetProgress();
     showView("input");
   });
 
